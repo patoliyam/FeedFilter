@@ -1,0 +1,9 @@
+body {
+    font-family:'Product Sans', Arial, sans-serif;
+    /* avoid an excessively wide status text */
+    /*white-space: pre;*/
+    text-overflow: ellipsis;
+    overflow: hidden;
+    max-width: 800px;
+    min-width: 400px;
+}

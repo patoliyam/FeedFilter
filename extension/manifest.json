@@ -1,0 +1,26 @@
+{
+  "manifest_version": 2,
+  "name": "feedfilter",
+  "description": "Control your feed on social.",
+  "version": "1.0",
+  "browser_action": {
+    "default_icon": "icon.png",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches" : ["<all_urls>"],
+      "js": ["jquery.js","content.js"]
+    }
+  ],
+  "permissions": [
+    "http://facebook.com/*",
+    "https://facebook.com/*",
+    "http://web.facebook.com/*",
+    "https://web.facebook.com/*",
+    "activeTab",
+    "storage",
+    "tabs",
+    "storage"
+  ]
+}

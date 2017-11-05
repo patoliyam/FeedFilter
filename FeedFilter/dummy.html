@@ -1,0 +1,46 @@
+def func4(text_of_post,a,count,userquery,block, post_id):
+    start = time.time()
+    print "func4 start"
+    headers = {
+        # Request headers
+        'Content-Type': 'text/plain',
+        'Ocp-Apim-Subscription-Key': '8a08bd9c92f646e5b5189b0edc504746',
+    }
+    # body = { 'text' : text_of_post}
+    params = urllib.urlencode({
+        # Request parameters
+        'q':"we are happy",
+        'autocorrect': '{boolean}',
+        'PII': '{boolean}',
+        'listId': '{string}',
+        'body' : '{this is wow}',
+    })
+    if(text_of_post != ""):
+        try:
+            # # body = { 'text/plain' : unicodedata.normalize('NFKD', text_of_post).encode('ascii', 'ignore') }
+            #
+            # conn = httplib.HTTPSConnection('westus.api.cognitive.microsoft.com')
+            # print json.dumps(body)
+            # # "body : {'example': 'Is this a crap email abcdef@abcd.com, phone: 6657789887, IP: 255.255.255.255, 1 Microsoft Way Redmond, WA 98052'}"
+            # body = {
+            #     r"I want to go to picnic "
+            # }
+            # # a = strunicodedata.normalize('NFKD', text_of_post).encode('ascii', 'ignore')
+            # conn.request("POST", "/contentmoderator/moderate/v1.0/ProcessText/Screen/?%s" % params , headers)
+            # response = conn.getresponse()
+            # data = response.read()
+            # print "data fetched is : "
+            # print(data)
+            # conn.close()
+
+
+
+
+            r = requests.get("https://westus.api.cognitive.microsoft.com/contentmoderator/moderate/v1.0/ProcessText/Screen/', headers=headers, params=params")
+            # response = conn.getresponse()
+            # data = response.read()
+            # print "data fetched is : "
+            print(r.json())
+        except Exception as e:
+            print "error happened in cm api"
+            print e
