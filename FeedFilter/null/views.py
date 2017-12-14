@@ -19,9 +19,6 @@ import unicodedata
 import requests
 from null.models import *
 
-
-
-
 def dice_coefficient(a, b):
     """dice coefficient 2nt/na + nb."""
     if not len(a) or not len(b): return 0.0
@@ -80,7 +77,7 @@ def func1(url_of_image,a,count,userquery,block_list,post_id):
     '''text of image is being analyzed'''
     text_of_image = response.full_text_annotation.text
 #     # print text_of_image
-    accessKey = 'df0d9ef87db04d2a9985a64583e7e54a'
+    accessKey = 'c70981d041df4154bd46c6a9368e681e'
     uri = 'westus.api.cognitive.microsoft.com'
     path = '/text/analytics/v2.0/keyPhrases'
     documents = {'documents': [
@@ -142,7 +139,7 @@ def  func3(url_of_image,a,count,userquery,block_list,post_id):
     headers = {
         # Request headers
         'Content-Type': 'application/json',
-        'Ocp-Apim-Subscription-Key': '8a08bd9c92f646e5b5189b0edc504746',
+        'Ocp-Apim-Subscription-Key': '05f273ccef1543379cb6bc37a018060a',
     }
     params = urllib.urlencode({
         # Request parameters
@@ -167,13 +164,13 @@ def  func3(url_of_image,a,count,userquery,block_list,post_id):
 
 
 def func4(text_of_post,a,count,userquery,block, post_id):
-    accessKey = 'df0d9ef87db04d2a9985a64583e7e54a'
+    accessKey = 'c70981d041df4154bd46c6a9368e681e'
     uri = 'westus.api.cognitive.microsoft.com'
     path = '/text/analytics/v2.0/sentiment'
     headers = {
         # Request headers
         'Content-Type': 'application/json',
-        'Ocp-Apim-Subscription-Key': '{df0d9ef87db04d2a9985a64583e7e54a}',
+        'Ocp-Apim-Subscription-Key': '{c70981d041df4154bd46c6a9368e681e}',
     }
     params = urllib.urlencode({
     })
@@ -203,7 +200,7 @@ def func4(text_of_post,a,count,userquery,block, post_id):
 
 def func2(text_of_post,a,count,userquery,block, post_id):
     start = time.time()
-    accessKey = 'df0d9ef87db04d2a9985a64583e7e54a'
+    accessKey = 'c70981d041df4154bd46c6a9368e681e'
     uri = 'westus.api.cognitive.microsoft.com'
     path = '/text/analytics/v2.0/keyPhrases'
     documents = {'documents': [
