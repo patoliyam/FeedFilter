@@ -17,7 +17,7 @@ from bs4 import BeautifulSoup
 import base64
 import unicodedata
 import requests
-from null.models import *
+from models import *
 
 def dice_coefficient(a, b):
     """dice coefficient 2nt/na + nb."""

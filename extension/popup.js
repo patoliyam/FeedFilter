@@ -1,3 +1,4 @@
+//variable to store current tag entered 
 var data = "";
 //listener : it runs when we get data from content.js(fb)
 chrome.runtime.onMessage.addListener(function(request, sender,sendResponse) {
@@ -8,27 +9,7 @@ chrome.runtime.onMessage.addListener(function(request, sender,sendResponse) {
 });
 
 document.addEventListener('DOMContentLoaded',function(){
-    if($('#image_moderation').prop("checked")==true)
-    {
-        chrome.storage.sync.get({value:{}}, function(item) {
-            console.log("checked");
-            item['value'][0] = 1;
-            chrome.storage.sync.set({value: item['value']}, function(item) {
-                console.log(item);
-            });            
-        }); 
-    }
-    else
-    {
-        chrome.storage.sync.get({value:{}}, function(item) {
-            console.log("not checked");
-            item['value'][0] = 0;
-            chrome.storage.sync.set({value: item['value']}, function(item) {
-                console.log(item);
-            });            
-        });            
-    }
-
+    
     chrome.storage.sync.get({taglist: []}, function(item) {
         for (var i in item['taglist'])
         {
@@ -57,8 +38,6 @@ document.addEventListener('DOMContentLoaded',function(){
             });
         }); 
     });
-
-
 });
 
 // $(document).ready(function(){
@@ -73,6 +52,7 @@ document.addEventListener('DOMContentLoaded',function(){
 //     }, 10000);
 // });
 
+//clicking on any tag will remove the tag from taglist and from frontend too
 $(document).ready(function(){
     $('.removetag').click(function(){
         var value = $(this).text();
@@ -87,28 +67,72 @@ $(document).ready(function(){
     });
 });
 
-
-$(document).ready(function() {
-    $('#image_moderation').change(function() {
-        if($(this).is(":checked")) {
-            chrome.storage.sync.get({value:{}}, function(item) {
-                item['value'][0] = 1;
-                chrome.storage.sync.set({value: item['value']}, function(item) {
-                });            
-            });
+$(document).ready(function(){
+    chrome.storage.sync.get({imagemodvalue: {}}, function(item) {
+        console.log("i printed");
+        console.log(item['imagemodvalue']);
+        if(item['imagemodvalue'][0]==1){
+            document.getElementById("image_moderation").checked = true;
+        }else{
+            document.getElementById("image_moderation").checked = false;
         }
-        else
-        {
-            chrome.storage.sync.get({value:{}}, function(item) {
-                item['value'][0] = 0;
-                chrome.storage.sync.set({value: item['value']}, function(item) {
-                });            
-            });
+
+    });
+    chrome.storage.sync.get({textmodvalue: {}}, function(item) {
+        console.log("i printed");
+        console.log(item['textmodvalue']);
+        if(item['textmodvalue'][0]==1){
+            document.getElementById("text_moderation").checked = true;
+        }else{
+            document.getElementById("text_moderation").checked = false;
         }
     });
 });
 
 
+
+$(document).ready(function() {
+    $('#image_moderation').change(function() {
+        if($(this).is(":checked")) {
+            console.log("that's what i wanted");
+            chrome.storage.sync.get({imagemodvalue:{}}, function(item) {
+                item['imagemodvalue'][0] = 1;
+                chrome.storage.sync.set({imagemodvalue: item['imagemodvalue']}, function(item) {
+                });            
+            });
+        }
+        else
+        {
+            console.log("that's what i not wanted");
+            chrome.storage.sync.get({imagemodvalue:{}}, function(item) {
+                item['imagemodvalue'][0] = 0;
+                chrome.storage.sync.set({imagemodvalue: item['imagemodvalue']}, function(item) {
+                });            
+            });
+        }
+    });
+});
+$(document).ready(function() {
+    $('#text_moderation').change(function() {
+        if($(this).is(":checked")) {
+            console.log("that's what i wanted");
+            chrome.storage.sync.get({textmodvalue:{}}, function(item) {
+                item['textmodvalue'][0] = 1;
+                chrome.storage.sync.set({textmodvalue: item['textmodvalue']}, function(item) {
+                });            
+            });
+        }
+        else
+        {
+            console.log("that's what i not wanted");
+            chrome.storage.sync.get({textmodvalue:{}}, function(item) {
+                item['textmodvalue'][0] = 0;
+                chrome.storage.sync.set({textmodvalue: item['textmodvalue']}, function(item) {
+                });            
+            });
+        }
+    });
+});
 
 
 
