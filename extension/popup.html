@@ -9,27 +9,52 @@
     <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="css/style.css">
 
+
 </head>
 <body>
 <div class="container">
 
 	<h1>Social Feed Filter</h1>
-	<div class="checkbox container"><input type="checkbox" id="image_moderation" name="image_moderation" checked value="">Image moderation<br></div>
-	<div class="checkbox container"><input type="checkbox" id="text_moderation" name="text_moderation" checked value="">Text moderation<br></div>
-	<form action="" class="form-group container">
-		<div class="form-group"><input class="form-control" type="text" name="filtertags" id="filter" placeholder="Enter Keyword to block"></div>
-		<button class="btn" class="form-control" id="btnSubmit">Submit</button>
-	</form>
-	<br>
-	<div class="container">
-		<h3>Blocked Tags</h3>
-		<ul id="tags">
-		</ul>
+
+	<div id="login_register">
+		<div id="login" style="display: none;">
+			<h2>LOGIN</h2>
+			Username : <input type="text" id="login_username" placeholder="Enter username">
+			<br>
+			Password : <input type="password" id="login_password" placeholder="Enter password">
+			<br>
+			<button id="login_btn" >Login</button>
+			<button id="show_register">New User? Sign Up</button>
+		</div>
+		<div id="register" style="display: none;">
+			<h2>REGISTER</h2>
+			Username : <input type="text" id="register_username" placeholder="Enter username">
+			<br>
+			Password : <input type="password" id="register_password" placeholder="Enter password">
+			<br>
+			<button id="register_btn" >Register</button>
+		</div>
 	</div>
 
-	<div class="container">
-		<h3>No of block posts</h3>
-		<h3 id="no_blocked"></h3>
+	<div id="extension" style="">
+		<button id="logout_btn"> LOGOUT</button>
+		<div class="checkbox container"><input type="checkbox" id="image_moderation" name="image_moderation" checked value="">Image moderation<br></div>
+		<div class="checkbox container"><input type="checkbox" id="text_moderation" name="text_moderation" checked value="">Text moderation<br></div>
+		<form action="" class="form-group container">
+			<div class="form-group"><input class="form-control" type="text" name="filtertags" id="filter" placeholder="Enter Keyword to block"></div>
+			<button class="btn" class="form-control" id="btnSubmit">Submit</button>
+		</form>
+		<br>
+		<div class="container">
+			<h3>Blocked Tags</h3>
+			<ul id="tags">
+			</ul>
+		</div>
+
+		<div class="container">
+			<h3>No of block posts</h3>
+			<h3 id="no_blocked"></h3>
+		</div>
 	</div>
 </div>
 

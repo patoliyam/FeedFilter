@@ -3,6 +3,7 @@ from django.template.context import RequestContext
 from django.contrib.auth import logout as auth_logout
 from django.http import HttpResponse
 import httplib, urllib
+from django.contrib.auth import authenticate, login, logout
 import urllib2, json
 from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
@@ -18,6 +19,52 @@ import base64
 import unicodedata
 import requests
 from models import *
+
+@csrf_exempt
+def register(request):
+    if request.method == 'POST':
+        username = (request.POST.get('username'))
+        password = (request.POST.get('password'))
+        if User.objects.filter(username=username).count() > 0:
+            return JsonResponse({"status":0})
+        user = User.objects.create_user(username=username,password=password)
+        user.save()
+        user = authenticate(username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return JsonResponse({"status":1})
+    else:
+        return JsonResponse({"status":0})
+
+@csrf_exempt
+def login_view(request):
+    if request.method == 'POST':
+        username = (request.POST.get('username'))
+        password = (request.POST.get('password'))
+        user = authenticate(username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return JsonResponse({"status":1})
+        else:
+            return JsonResponse({"status":0})
+    else:
+        return JsonResponse({"status":0})
+
+@csrf_exempt
+def logout_view(request):
+    # print(request.user)
+    if request.user is not None and request.user.is_authenticated:
+        logout(request)
+        return JsonResponse({"status":1})
+    else:
+        return JsonResponse({"status":0})
+
+@csrf_exempt
+def checklogin(request):
+    if request.user is not None and request.user.is_authenticated:
+        return JsonResponse({"status":1})
+    else:
+        return JsonResponse({"status":0})
 
 def dice_coefficient(a, b):
     """dice coefficient 2nt/na + nb."""
@@ -38,10 +85,12 @@ def dice_coefficient(a, b):
     dice_coeff = overlap * 2.0 / (len(a_bigrams) + len(b_bigrams))
     return dice_coeff
 
-def func1(url_of_image,a,count,userquery,block_list,post_id):
+def image_filter(url_of_image,a,count,userquery,block_list,post_id,request):
     # print "func 1"
-    # '''image is being analyzed'''
+    '''image is being analyzed'''
+    print("image is being analyzed")
     client = vision.ImageAnnotatorClient()
+    print(url_of_image)
     imgurl1 = urllib2.urlopen(
         url_of_image).read()
     response = client.annotate_image({
@@ -60,147 +109,209 @@ def func1(url_of_image,a,count,userquery,block_list,post_id):
     choices = all_web_entities.keys()
     for query in userquery:
         fuzoutput = process.extract(query, choices, limit=5)
-        for j in fuzoutput:
-#             # print j[0],j[1],all_web_entities[j[0]]
-            if(j[1]>50):
-                if (Tag.objects.filter(tagname=query).count() == 0):
-                    tmp = Tag(tagname=query, no_of_post=1)
-                    tmp.save()
-                else:
-                    tmp = Tag.objects.filter(tagname=query)[0]
-                    tmp.no_of_post = tmp.no_of_post + 1
-                    tmp.save()
+        # print(fuzoutput)
+        for fuz in fuzoutput:
+            # print fuz[0],fuz[1],all_web_entities[fuz[0]]
+            if(fuz[1]>70):
+                # ambiguity
+                # if (Tag.objects.filter(tagname=query).count() == 0):
+                #     tmp = Tag(tagname=query, no_of_post=1)
+                #     tmp.save()
+                # else:
+                #     tmp = Tag.objects.filter(tagname=query)[0]
+                #     tmp.no_of_post = tmp.no_of_post + 1
+                #     tmp.save()
                 if(post_id not in block_list):
                     # print "link of img blocked : " + url_of_image
+                    if BlockedPost.objects.filter(user=request.user, post_id=str(post_id)).count() == 0:
+                        tmp = BlockedPost(user=request.user, post_id=str(post_id), post_type='0',
+                                          text_or_url=url_of_image)
+                        tmp.save()
                     block_list.append(post_id)
+    # print("ye wala")
+    # print(block_list)
 
-    '''text of image is being analyzed'''
+#     '''text of image is being analyzed'''
+#     text_of_image = response.full_text_annotation.text
+#     accessKey = 'b188ffaad0c34867b8804255cdea2706'
+#     uri = 'eastasia.api.cognitive.microsoft.com'
+#     path = '/text/analytics/v2.0/keyPhrases'
+#     documents = {'documents': [
+#         {'id': '1',
+#          'text': text_of_image},
+#     ]}
+#     headers = {'Ocp-Apim-Subscription-Key': accessKey}
+#     conn = httplib.HTTPSConnection(uri)
+#     body = json.dumps(documents)
+#     conn.request("POST", path, body, headers)
+#     response = conn.getresponse()
+#     keyword = response.read()
+#     keyword = json.loads(keyword)
+#     keyword = keyword['documents']
+#     if len(keyword) != 0:
+#         keyword = keyword[0]
+#         if keyword is not None:
+#             keyword = keyword['keyPhrases']
+#             for query in userquery:
+#                 if(query.lower() in text_of_image.lower()):
+#                     if post_id not in block_list:
+#                         block_list.append(post_id)
+#                         # print "link of img blocked : " + url_of_image
+#                         # if (Tag.objects.filter(tagname=query).count() == 0):
+#                         #     tmp = Tag(tagname=query, no_of_post=1)
+#                         #     tmp.save()
+#                         # else:
+#                         #     tmp = Tag.objects.filter(tagname=query)[0]
+#                         #     tmp.no_of_post = tmp.no_of_post + 1
+#                         #     tmp.save()
+#                     continue
+#                 for key in keyword:
+#                     match = dice_coefficient(key, query)
+# #                     # print ("Key :" + str(key) + "  Query : " + str(query) + "  Match : " + str(match))
+#                     if match > 0.4:
+#                         if post_id not in block_list :
+#                             block_list.append(post_id)
+#                             # if (Tag.objects.filter(tagname=query).count() == 0):
+#                             #     tmp = Tag(tagname=query, no_of_post=1)
+#                             #     tmp.save()
+#                             # else:
+#                             #     tmp = Tag.objects.filter(tagname=query)[0]
+#                             #     tmp.no_of_post = tmp.no_of_post + 1
+#                             #     tmp.save()
+    # '''marking a post as eveluated'''
+
+    temp = []
     text_of_image = response.full_text_annotation.text
-#     # print text_of_image
-    accessKey = 'c70981d041df4154bd46c6a9368e681e'
-    uri = 'westus.api.cognitive.microsoft.com'
-    path = '/text/analytics/v2.0/keyPhrases'
-    documents = {'documents': [
-        {'id': '1',
-         'text': text_of_image},
-    ]}
-    headers = {'Ocp-Apim-Subscription-Key': accessKey}
-    conn = httplib.HTTPSConnection(uri)
-    body = json.dumps(documents)
-    conn.request("POST", path, body, headers)
-    response = conn.getresponse()
-    keyword = response.read()
-    keyword = json.loads(keyword)
-    keyword = keyword['documents']
-    if len(keyword) != 0:
-        keyword = keyword[0]
-        if keyword is not None:
-            keyword = keyword['keyPhrases']
-            for query in userquery:
-                if(query.lower() in text_of_image.lower()):
 
-                    if post_id not in block_list:
-                        block_list.append(post_id)
-                        # print "link of img blocked : " + url_of_image
-                        if (Tag.objects.filter(tagname=query).count() == 0):
-                            tmp = Tag(tagname=query, no_of_post=1)
-                            tmp.save()
-                        else:
-                            tmp = Tag.objects.filter(tagname=query)[0]
-                            tmp.no_of_post = tmp.no_of_post + 1
-                            tmp.save()
+    print("text_of_image : " ,text_of_image)
 
-                    continue
-                for key in keyword:
-                    match = dice_coefficient(key, query)
-#                     # print ("Key :" + str(key) + "  Query : " + str(query) + "  Match : " + str(match))
-                    if match > 0.1:
-#                         # print "pahucha"
+    text_moderation(text_of_image,'',temp,userquery,block_list,post_id)
 
-                        if post_id not in block_list :
-                            block_list.append(post_id)
-                            # print "link of img blocked : " + url_of_image
-                            if (Tag.objects.filter(tagname=query).count() == 0):
-                                tmp = Tag(tagname=query, no_of_post=1)
-                                tmp.save()
-                            else:
-                                tmp = Tag.objects.filter(tagname=query)[0]
-                                tmp.no_of_post = tmp.no_of_post + 1
-                                tmp.save()
-#                             # print block
+    sentiment_analyzer(text_of_image,'',temp,userquery,block_list,post_id)
 
+    text_filter(text_of_image,'',temp,userquery,block_list,post_id)
 
-    '''marking a post as eveluated'''
     count.append(1)
 
-def  func3(url_of_image,a,count,userquery,block_list,post_id):
+
+# using content_moderator api. it is content moderator ( not vision).
+def adult_racy_filter(url_of_image,a,count,userquery,block_list,post_id,request):
     start = time.time()
     # print start
     headers = {
         # Request headers
         'Content-Type': 'application/json',
-        'Ocp-Apim-Subscription-Key': '05f273ccef1543379cb6bc37a018060a',
+        'Ocp-Apim-Subscription-Key': 'f855ce3e91d043d3953004bae7964f5e',
     }
     params = urllib.urlencode({
         # Request parameters
-        'CacheImage': '{boolean}',
+        'CacheImage': '{false}',
     })
     try:
         body = {"DataRepresentation":"URL","Value":url_of_image}
-        conn = httplib.HTTPSConnection('westus.api.cognitive.microsoft.com')
+        conn = httplib.HTTPSConnection('eastasia.api.cognitive.microsoft.com')
         conn.request("POST", "/contentmoderator/moderate/v1.0/ProcessImage/Evaluate?%s" % params, json.dumps(body), headers)
         response = conn.getresponse()
         data = response.read()
-        # print "data :"
+        print "data from adult_Racy api:"
+        data = json.loads(data)
         # print(data)
         conn.close()
-        if data.IsImageAdultClassified or data.IsImageRacyClassified:
+        if data['RacyClassificationScore']> 0.2 or data['AdultClassificationScore'] > 0.2:
             if (post_id not in block_list):
-                # print "link of img blocked : " + url_of_image
+                if BlockedPost.objects.filter(user=request.user, post_id=str(post_id)).count() == 0:
+                    tmp = BlockedPost(user=request.user, post_id=str(post_id), post_type='0', text_or_url=url_of_image)
+                    tmp.save()
                 block_list.append(post_id)
+    except Exception as e:
+        # print("error in adult racy filter",e)
+        pass
+    count.append(1)
+
+# using moderation api. Gives three score for a text
+def text_moderation(text_of_post,a,count,userquery,block_list, post_id,request):
+    headers = {
+        # Request headers
+        'Content-Type': 'text/plain',
+        'Ocp-Apim-Subscription-Key': 'f855ce3e91d043d3953004bae7964f5e',
+    }
+
+    params = urllib.urlencode({
+        # Request parameters
+        'autocorrect': 'false',
+        # 'PII': '{boolean}',
+        # 'listId': '{string}',
+        'classify': 'True',
+        # 'language': '{string}',
+    })
+    body = str(text_of_post)
+    try:
+        conn = httplib.HTTPSConnection('eastasia.api.cognitive.microsoft.com')
+        conn.request("POST", "/contentmoderator/moderate/v1.0/ProcessText/Screen?%s" % params, body, headers)
+        response = conn.getresponse()
+        data = response.read()
+        print(data)
+        data = json.loads(data)
+        conn.close()
+        cat1 = data['Classification']['Category1']['Score']
+        cat2 = data['Classification']['Category2']['Score']
+        cat3 = data['Classification']['Category3']['Score']
+        review = data['Classification']['ReviewRecommended']
+
+        if review or cat1 > 0.2 or cat2 > 0.2 or cat3 > 0.2:
+            if post_id not in block_list:
+                block_list.append(post_id)
+                if BlockedPost.objects.filter(user=request.user, post_id=str(post_id)).count() == 0:
+                    tmp = BlockedPost(user=request.user, post_id=str(post_id), post_type='1', text_or_url=text_of_post)
+                    tmp.save()
 
     except Exception as e:
+        print("error in text moderationfilter", e)
         pass
+    count.append(1)
 
-
-def func4(text_of_post,a,count,userquery,block, post_id):
-    accessKey = 'c70981d041df4154bd46c6a9368e681e'
-    uri = 'westus.api.cognitive.microsoft.com'
-    path = '/text/analytics/v2.0/sentiment'
+# using text analytics api. Gives a single score for sentiment
+def sentiment_analyzer(text_of_post,a,count,userquery,block_list, post_id,request):
     headers = {
         # Request headers
         'Content-Type': 'application/json',
-        'Ocp-Apim-Subscription-Key': '{c70981d041df4154bd46c6a9368e681e}',
+        'Ocp-Apim-Subscription-Key': 'eac4641ee0cf4d9183a7114fceca02aa',
     }
+
     params = urllib.urlencode({
     })
 
     try:
-        conn = httplib.HTTPSConnection('westus.api.cognitive.microsoft.com')
-        documents = {'documents': [
-            {"language": "en",
-             'id': '1',
-             'text': text_of_post },
-        ]}
-        headers = {'Ocp-Apim-Subscription-Key': accessKey}
-        conn = httplib.HTTPSConnection(uri)
-        body = json.dumps(documents)
-        conn.request("POST", path, body, headers)
+        body = {"documents": [
+                                {
+                                  "language": "en",
+                                  "id": "1",
+                                  "text": text_of_post
+                                }
+                            ]
+                }
+        conn = httplib.HTTPSConnection('eastasia.api.cognitive.microsoft.com')
+        conn.request("POST", "/text/analytics/v2.0/sentiment?%s" % params, json.dumps(body), headers)
         response = conn.getresponse()
         data = response.read()
         data = json.loads(data)
-        if(len(data["errors"])==0):
-            if Post.objects.filter(post_id=post_id).count()==0:
-                tmp = Post(post_id = post_id,sentiments = data["documents"][0]["score"])
-                tmp.save()
         conn.close()
-
+        score = data['documents'][0]['score']
+        if score < 0.5:
+            if post_id not in block_list:
+                block_list.append(post_id)
+                if BlockedPost.objects.filter(user=request.user, post_id=str(post_id)).count() == 0:
+                    tmp = BlockedPost(user=request.user, post_id=str(post_id), post_type='1', text_or_url=text_of_post)
+                    tmp.save()
     except Exception as e:
-        print(e)
+        print("error in text sentiment filter api", e)
+        pass
+    count.append(1)
 
-def func2(text_of_post,a,count,userquery,block, post_id):
+# using text analytics api. Gives keywords from text
+def text_filter(text_of_post,a,count,userquery,block_list, post_id,request):
     start = time.time()
-    accessKey = 'c70981d041df4154bd46c6a9368e681e'
+    accessKey = 'b188ffaad0c34867b8804255cdea2706'
     uri = 'westus.api.cognitive.microsoft.com'
     path = '/text/analytics/v2.0/keyPhrases'
     documents = {'documents': [
@@ -225,46 +336,54 @@ def func2(text_of_post,a,count,userquery,block, post_id):
                 keyword = keyword['keyPhrases']
                 for query in userquery:
                     if (query.lower() in text_of_post.lower()):
-                        if(Tag.objects.filter(tagname=query).count()==0):
-                            tmp = Tag(tagname=query,no_of_post=1)
-                            tmp.save()
-                        else:
-                            tmp = Tag.objects.filter(tagname=query)[0]
-                            tmp.no_of_post = tmp.no_of_post + 1
-                            tmp.save()
-                        if post_id not in block:
-                            block.append(post_id)
-                            # print "post blocked : " + text_of_post
+                        # ambiguity
+                        # if(Tag.objects.filter(tagname=query).count()==0):
+                        #     tmp = Tag(tagname=query,no_of_post=1)
+                        #     tmp.save()
+                        # else:
+                        #     tmp = Tag.objects.filter(tagname=query)[0]
+                        #     tmp.no_of_post = tmp.no_of_post + 1
+                        #     tmp.save()
+                        if post_id not in block_list:
+                            block_list.append(post_id)
+                            if BlockedPost.objects.filter(user=request.user, post_id=str(post_id)).count() == 0:
+                                tmp = BlockedPost(user=request.user, post_id=str(post_id), post_type='1',
+                                                  text_or_url=text_of_post)
+                                tmp.save()
                         continue
                     for key in keyword:
-
                         match = dice_coefficient(key,query)
                         # print ("Key :" + str(key) + "  Query : " + str(query) + "  Match : " + str(match))
                         if match > 0.1:
-                            if (Tag.objects.filter(tagname=query).count() == 0):
-                                tmp = Tag(tagname=query, no_of_post=1)
-                                tmp.save()
-                            else:
-                                tmp = Tag.objects.filter(tagname=query)[0]
-                                tmp.no_of_post = tmp.no_of_post + 1
-                                tmp.save()
-#                             # print "pahucha"
-                            if post_id not in block :
-                                block.append(post_id)
-#                                 # print block
+                            # ambiguity
+                            # if (Tag.objects.filter(tagname=query).count() == 0):
+                            #     tmp = Tag(tagname=query, no_of_post=1)
+                            #     tmp.save()
+                            # else:
+                            #     tmp = Tag.objects.filter(tagname=query)[0]
+                            #     tmp.no_of_post = tmp.no_of_post + 1
+                            #     tmp.save()
+                            if post_id not in block_list :
+                                block_list.append(post_id)
+                                if BlockedPost.objects.filter(user=request.user, post_id=str(post_id)).count() == 0:
+                                    tmp = BlockedPost(user=request.user, post_id=str(post_id), post_type='1',
+                                                      text_or_url=text_of_post)
+                                    tmp.save()
         count.append(1)
 
 @csrf_exempt
 def i_to_a(request):
-    # print "inside i to a"
+    print "came inside i to a"
     count = []
     userquery = []
     i = 0
     while(request.POST.get('userquery[' + str(i) + ']')):
+        # print(i)
+        # print(request.POST.get('userquery['+ str(i)+']'))
         userquery.append(request.POST.get('userquery['+ str(i)+']'))
-        if Tag.objects.filter(tagname=request.POST.get('userquery[' + str(i) + ']')).count()==0:
-            tmp = Tag(tagname=request.POST.get('userquery[' + str(i) + ']'),no_of_post=0)
-            tmp.save()
+        # if Tag.objects.filter(tagname=request.POST.get('userquery[' + str(i) + ']')).count()==0:
+        #     tmp = Tag(tagname=request.POST.get('userquery[' + str(i) + ']'),no_of_post=0)
+        #     tmp.save()
         i = i+1
 
     all_threads = []
@@ -281,22 +400,26 @@ def i_to_a(request):
                 # print "this is index : "+str(index)
                 post = soup.find('div')
                 # print post['id']
-                all_threads.append(threading.Thread(target=func1,args=(j['src'],index,count,userquery,block_list,post['id'])))
+                all_threads.append(threading.Thread(target=image_filter,args=(j['src'],index,count,userquery,block_list,post['id'],request)))
                 all_threads[index].start()
                 index = index + 1
-                all_threads.append(threading.Thread(target=func3, args=(j['src'], index, count, userquery, block_list, post['id'])))
+                all_threads.append(threading.Thread(target=adult_racy_filter, args=(j['src'], index, count, userquery, block_list, post['id'],request)))
                 all_threads[index].start()
                 index = index + 1
 #             # print "post end"
 
     start = time.time()
+    # to check all the threads have completed
     while(2*len(count)!=index and time.time()-start<100):
         pass
-    # print block_list
-    for i in block_list:
-        if BlockedPost.objects.filter(post_id=block_list[i]).count()==0:
-            tmp  = BlockedPost(post_id=block_list[i])
-            tmp.save()
+    print("in i to a blocklist")
+    print block_list
+
+    # error was unicode can't be key of dictionary
+    # for i in block_list:
+    #     if BlockedPost.objects.filter(post_id=str(block_list[i])).count()==0:
+    #         tmp  = BlockedPost(post_id=block_list[i])
+    #         tmp.save()
     return JsonResponse({"status":True,"block_list": block_list})
 
 @csrf_exempt
@@ -308,9 +431,9 @@ def t_to_a(request):
     # print request.POST.keys()
     while (request.POST.get('userquery[' + str(i) + ']')):
         userquery.append(request.POST.get('userquery[' + str(i) + ']'))
-        if Tag.objects.filter(tagname=request.POST.get('userquery[' + str(i) + ']')).count()==0:
-            tmp = Tag(tagname=request.POST.get('userquery[' + str(i) + ']'),no_of_post=0)
-            tmp.save()
+        # if Tag.objects.filter(tagname=request.POST.get('userquery[' + str(i) + ']')).count()==0:
+        #     tmp = Tag(tagname=request.POST.get('userquery[' + str(i) + ']'),no_of_post=0)
+        #     tmp.save()
 #         # print userquery[i]
         i = i + 1
     all_threads = []
@@ -325,21 +448,22 @@ def t_to_a(request):
             text_of_post = j.text
             post = soup.find('div')
 #             # print post['id']
-            all_threads.append(threading.Thread(target=func2, args=(text_of_post, index, count, userquery, block_list, post['id'])))
+            all_threads.append(threading.Thread(target=text_filter, args=(text_of_post, index, count, userquery, block_list, post['id'],request)))
             all_threads[index].start()
             index = index + 1
-            all_threads.append(threading.Thread(target=func4, args=(text_of_post, index, count, userquery, block_list, post['id'])))
-            all_threads[index].start()
-            index = index + 1
+            # all_threads.append(threading.Thread(target=sentiment_analyzer, args=(text_of_post, index, count, userquery, block_list, post['id'],request)))
+            # all_threads[index].start()
+            # index = index + 1
+            # all_threads.append(threading.Thread(target=text_moderation, args=(text_of_post, index, count, userquery, block_list, post['id'],request)))
+            # all_threads[index].start()
+            # index = index + 1
 #         # print "post end"
     start = time.time()
-    while (2*len(count) != index and time.time() - start < 100):
+    while (len(count) != index and time.time() - start < 100):
         pass
     # print "block_list : " , block_list
-    for i in block_list:
-        if BlockedPost.objects.filter(post_id=i).count()==0:
-            tmp  = BlockedPost(post_id=i)
-            tmp.save()
+    # for i in block_list:
+    #     if BlockedPost.objects.filter(post_id=i).count()==0:
+    #         tmp  = BlockedPost(post_id=i)
+    #         tmp.save()
     return JsonResponse({"status": True, "block_list": block_list})
-
-

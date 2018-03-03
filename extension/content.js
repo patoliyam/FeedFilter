@@ -1,7 +1,17 @@
 $(document).ready(function(){
+    setTimeout(function(){
+        sendpostandhide();
+    },4000);        
+    // setInterval(function(){
+    //     sendpostandhide();
+    // },70000);
+});
+
+$(document).ready(function(){
+    console.log("started in content.js");    
     chrome.storage.sync.get({blockedposts:{}}, function(item) {
         item['blockedposts'][0] = 1;
-        console.log("init blockedposts");
+        // console.log("init blockedposts");
         chrome.storage.sync.set({blockedposts: item['blockedposts']}, function(item) {
         });            
     });
@@ -9,19 +19,14 @@ $(document).ready(function(){
 
 chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
-        console.log("reching here");
+        // console.log("reching here");
         if (request.type == "hello") {
-            sendpostandhide();
+            // sendpostandhide();
+            console.log("message handler was working");
         }
     }
 );
 
-$(document).ready(function(){
-    setTimeout(function(){
-        sendpostandhide();    
-        setInterval(sendpostandhide(),20000);
-    },4000);        
-});
 
 function sendpostandhide(){
     var ele = document.getElementsByClassName("_5jmm");
@@ -44,35 +49,34 @@ function sendpostandhide(){
         // chrome.storage.sync.set({'posts': item['posts']}, function(items) {   
         // });
     }
-    console.log('data we are sending');
     userquery = {};
     chrome.storage.sync.get({taglist: []}, function(item) {   
         for (a in item['taglist'])
         {
             userquery[a] = item['taglist'][a];       
         }
+        console.log(" userquery is : " );
         console.log(userquery);
+        console.log('data we are sending is : ');
+        console.log(dataToSend);
         chrome.storage.sync.get({value:{}}, function(item) {
-            console.log(item);
             $.ajax({
                 type: "POST",
-                url : "https://62e7a8db.ngrok.io/image_to_annotation",
+                url : "https://d4b1770f.ngrok.io/image_to_annotation",
                 data: {
                     fbposts: dataToSend,
                     userquery: userquery,
                 },
                 success : function (data) {
                     blocklist = data['block_list'];
+                    console.log("blacklist is");
                     console.log(blocklist);
                     console.log("end of ajax");
-                    console.log("image_to_annotation");                    
                     chrome.storage.sync.get({blockedposts:{}}, function(item) {
                         item['blockedposts'][0] =  item['blockedposts'][0] + blocklist.length;
-                        console.log(item['blockedposts'][0]);
                         chrome.storage.sync.set({blockedposts: item['blockedposts']}, function(item) {
                         });      
                         //$('#no_blocked').text("shubz" + item['blockedposts'][0].toString() );      
-                        console.log("value changed");
                         for (var a in blocklist)
                         {
                             $('#'+blocklist[a]).hide();
@@ -82,16 +86,21 @@ function sendpostandhide(){
                 error: function (error) {
                     console.log(error);
                 }
+            }).then(function(){
+                setTimeout(function(){
+                    sendpostandhide();
+                },40000);
             });
-            $.ajax({
+            /*$.ajax({
                 type: "POST",
-                url : "https://62e7a8db.ngrok.io/text_to_annotation",
+                url : "https://d4b1770f.ngrok.io/text_to_annotation",
                 data: {
                     fbposts: dataToSend,
                     userquery: userquery,
                 },
                 success : function (data) {
                     blocklist = data['block_list'];
+                    console.log("blacklist is");
                     console.log(blocklist);
                     console.log("end of ajax");
                     console.log("text_to_annotation");
@@ -111,7 +120,7 @@ function sendpostandhide(){
                 error: function (error) {
                     console.log(error);
                 }
-            });
+            });*/
         });
     });  
 }
