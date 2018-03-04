@@ -176,7 +176,7 @@ def adult_racy_filter(url_of_image, a, count, userquery, block_list, post_id, re
             print(data['RacyClassificationScore'])
             print(data['AdultClassificationScore'])
             conn.close()
-            if data['RacyClassificationScore'] > 0.4:
+            if data['RacyClassificationScore'] > 0.25:
                 if (post_id not in block_list):
                     block_list.append(post_id)
                     if Stats.objects.filter(sentiment_type='2',user=request.user).count() == 0:
@@ -189,7 +189,7 @@ def adult_racy_filter(url_of_image, a, count, userquery, block_list, post_id, re
                     if BlockedPost.objects.filter(user=request.user, post_id=str(post_id)).count() == 0:
                         tmp = BlockedPost(user=request.user, post_id=str(post_id), post_type='0', text_or_url=url_of_image)
                         tmp.save()
-            elif data['AdultClassificationScore'] > 0.4:
+            elif data['AdultClassificationScore'] > 0.25:
                 if (post_id not in block_list):
                     block_list.append(post_id)
                     if Stats.objects.filter(sentiment_type='1',user=request.user).count() == 0:
@@ -240,17 +240,11 @@ def text_moderation(text_of_post, a, count, userquery, block_list, post_id, requ
             cat3 = data['Classification']['Category3']['Score']
             review = data['Classification']['ReviewRecommended']
             print(review,cat1,cat2,cat3)
-            if review:
-                if post_id not in block_list:
-                    block_list.append(post_id)
-                    if BlockedPost.objects.filter(user=request.user, post_id=str(post_id)).count() == 0:
-                        tmp = BlockedPost(user=request.user, post_id=str(post_id), post_type='1', text_or_url=text_of_post)
-                        tmp.save()
-            elif cat1 > 0.4 and (cat1>cat2 and cat1>cat3):
+            if cat1 > 0.4 and (cat1>cat2 and cat1>cat3):
                 if post_id not in block_list:
                     block_list.append(post_id)
                     if Stats.objects.filter(user=request.user,sentiment_type='1').count() == 0:
-                        tmp = Stats(user=request.user, sentiment_type='1', count=0)
+                        tmp = Stats(user=request.user, sentiment_type='1', count=1)
                         tmp.save()
                     else:
                         tmp = Stats.objects.filter(user=request.user, sentiment_type='1')[0]
@@ -263,7 +257,7 @@ def text_moderation(text_of_post, a, count, userquery, block_list, post_id, requ
                 if post_id not in block_list:
                     block_list.append(post_id)
                     if Stats.objects.filter(user=request.user,sentiment_type='3').count() == 0:
-                        tmp = Stats(user=request.user, sentiment_type='3', count=0)
+                        tmp = Stats(user=request.user, sentiment_type='3', count=1)
                         tmp.save()
                     else:
                         tmp = Stats.objects.filter(user=request.user, sentiment_type='3')[0]
@@ -274,9 +268,10 @@ def text_moderation(text_of_post, a, count, userquery, block_list, post_id, requ
                         tmp.save()
             elif cat3 > 0.4 and (cat3>cat1 and cat3>cat2):
                 if post_id not in block_list:
+                    print("in cat3")
                     block_list.append(post_id)
                     if Stats.objects.filter(user=request.user,sentiment_type='0').count() == 0:
-                        tmp = Stats(user=request.user, sentiment_type='0', count=0)
+                        tmp = Stats(user=request.user, sentiment_type='0', count=1)
                         tmp.save()
                     else:
                         tmp = Stats.objects.filter(user=request.user, sentiment_type='0')[0]
@@ -420,8 +415,7 @@ def text_filter(text_of_post, a, count, userquery, block_list, post_id, request)
 
 @csrf_exempt
 def i_to_a(request):
-    print "came inside i to  check"
-    print(request.user.username)
+    print "came inside i to a"
     textmodvalue = request.POST.get('textmodvalue')
     imagemodvalue = request.POST.get('imagemodvalue')
     count = []
@@ -445,12 +439,17 @@ def i_to_a(request):
         if src_of_imgs is not None:
             for j in src_of_imgs:
                 post = soup.find('div')
-                if (UserPost.objects.filter(user=request.user, postid=post['id'], post_category='0').count() == 0):
-                    tmp = UserPost(user=request.user, postid=post['id'], post_category='0')
+                userquery2 = []
+                for k in userquery:
+                    if (UserPost.objects.filter(user=request.user, postid=post['id'], post_category='0',tagname=k).count() == 0):
+                        userquery2.append(k)
+
+                for t in userquery2:
+                    tmp = UserPost(user=request.user, postid=post['id'], post_category='0', tagname=t)
                     tmp.save()
-                    all_threads.append(threading.Thread(target=image_filter, args=(j['src'], index, count, userquery, block_list, post['id'], request,textmodvalue)))
-                    all_threads[index].start()
-                    index = index + 1
+                    # all_threads.append(threading.Thread(target=image_filter, args=(j['src'], index, count, userquery, block_list, post['id'], request,textmodvalue)))
+                    # all_threads[index].start()
+                    # index = index + 1
                     if imagemodvalue:
                         print("")
                         all_threads.append(threading.Thread(target=adult_racy_filter, args=(j['src'], index, count, userquery, block_list, post['id'],request)))
@@ -458,7 +457,7 @@ def i_to_a(request):
                         index = index + 1
     start = time.time()
     # to check all the threads have completed
-    while (2*len(count) != index and time.time() - start < 100):
+    while (len(count) != index and time.time() - start < 100):
         pass
     print("in i to a blocklist")
     print block_list
@@ -499,24 +498,23 @@ def t_to_a(request):
             for t in userquery2:
                 tmp = UserPost(user=request.user,postid=post['id'],post_category='1',tagname=t)
                 tmp.save()
-                all_threads.append(threading.Thread(target=text_filter, args=(text_of_post, index, count, userquery2, block_list, post['id'], request)))
-                all_threads[index].start()
-                index = index + 1
-                all_threads.append(threading.Thread(target=sentiment_analyzer, args=(text_of_post, index, count, userquery2, block_list, post['id'], request)))
-                all_threads[index].start()
-                index = index + 1
+                # all_threads.append(threading.Thread(target=text_filter, args=(text_of_post, index, count, userquery2, block_list, post['id'], request)))
+                # all_threads[index].start()
+                # index = index + 1
+                # all_threads.append(threading.Thread(target=sentiment_analyzer, args=(text_of_post, index, count, userquery2, block_list, post['id'], request)))
+                # all_threads[index].start()
+                # index = index + 1
                 if (textmodvalue):
                     print("")
                     all_threads.append(threading.Thread(target=text_moderation, args=(text_of_post, index, count, userquery2, block_list, post['id'], request)))
                     all_threads[index].start()
                     index = index + 1
     start = time.time()
-    while (3*len(count) != index and time.time() - start < 100):
+    while (len(count) != index and time.time() - start < 100):
         pass
     # print("blocklist in t_to_a")
     # print(block_list)
     return JsonResponse({"status": True, "block_list": block_list})
-
 
 def dashboard(request):
     if request.method == "GET":
@@ -553,7 +551,13 @@ def dashboard(request):
             stats2 = Stats.objects.filter(user=request.user, sentiment_type='2')[0].count
         if Stats.objects.filter(user=request.user, sentiment_type='3').count() > 0 :
             stats3 = Stats.objects.filter(user=request.user, sentiment_type='3')[0].count
-        total = UserPost.objects.filter(user=request.user).distinct('postid').count()
+
+        total = UserPost.objects.filter(user=request.user).values('postid')
+        tset = set([])
+        for i in total:
+            tset.add(i['postid'])
+        total = len(tset)
+
         print(total,stats0,stats1,stats2,stats3)
         stats4 = total - (stats0+stats1+stats2+stats3)
         if total > 0 :
@@ -569,13 +573,16 @@ def dashboard(request):
         # print "generic tags : " , generic_tags
         # # # print "stats : ", stats
         # print "account tags : ", account_tags
-        myset = UserPost.objects.filter(user=request.user).distinct('postid')
-        total = 0
-        count = myset.count()
+        myset = UserPost.objects.filter(user=request.user)
+        myset2 = myset.values('postid')
+        mset = set([])
+        for i in myset2:
+            mset.add(i['postid'])
+        count = len(mset)
         for i in myset:
             total = total+i.sentiment_score
         if count>0:
-            happy_value = total*100
+            happy_value = total*100/count
         else:
             happy_value = 0
         print(happy_value)
@@ -601,7 +608,6 @@ def blocked_content(request):
         blocked_posts = BlockedPost.objects.filter(user=request.user)
         # print blocked_posts
         return render(request,'null/blocked_content.html',{'blocked_posts':blocked_posts})
-
 
 def addtag(request):
     tagname = request.GET.get('tagname')
