@@ -319,12 +319,13 @@ def sentiment_analyzer(text_of_post, a, count, userquery, block_list, post_id, r
             response = conn.getresponse()
             data = response.read()
             data = json.loads(data)
-            print(data)
             conn.close()
             score = data['documents'][0]['score']
             for k in userquery:
-                if UserPost.objects.filter(post_id=post_id, user=request.user).count() > 0:
-                    tmp = UserPost(user=request.user, post_id=post_id, sentiment_score=score,tagname=k)
+                if UserPost.objects.filter(postid=post_id, user=request.user).count() > 0:
+                    print(score)
+                    tmp = UserPost.objects.get(user=request.user, postid=post_id,tagname=k)
+                    tmp.sentiment_score = score
                     tmp.save()
             if score < 0.5:
                 if post_id not in block_list:
@@ -335,8 +336,8 @@ def sentiment_analyzer(text_of_post, a, count, userquery, block_list, post_id, r
         except Exception as e:
             print("error in text sentiment filter api", e)
             pass
-        print("in sentiment analysis")
-        print(block_list)
+    print("in sentiment analysis")
+    print(block_list)
     count.append(1)
 
 
@@ -498,17 +499,17 @@ def t_to_a(request):
             for t in userquery2:
                 tmp = UserPost(user=request.user,postid=post['id'],post_category='1',tagname=t)
                 tmp.save()
-                all_threads.append(threading.Thread(target=text_filter, args=(text_of_post, index, count, userquery2, block_list, post['id'], request)))
-                all_threads[index].start()
-                index = index + 1
+                # all_threads.append(threading.Thread(target=text_filter, args=(text_of_post, index, count, userquery2, block_list, post['id'], request)))
+                # all_threads[index].start()
+                # index = index + 1
                 # all_threads.append(threading.Thread(target=sentiment_analyzer, args=(text_of_post, index, count, userquery2, block_list, post['id'], request)))
                 # all_threads[index].start()
                 # index = index + 1
-                # if (textmodvalue):
-                #     print("")
-                #     all_threads.append(threading.Thread(target=text_moderation, args=(text_of_post, index, count, userquery2, block_list, post['id'], request)))
-                #     all_threads[index].start()
-                #     index = index + 1
+                if (textmodvalue):
+                    print("")
+                    all_threads.append(threading.Thread(target=text_moderation, args=(text_of_post, index, count, userquery2, block_list, post['id'], request)))
+                    all_threads[index].start()
+                    index = index + 1
     start = time.time()
     while (len(count) != index and time.time() - start < 100):
         pass

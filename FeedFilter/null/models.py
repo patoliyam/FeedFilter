@@ -40,7 +40,7 @@ class UserPost(models.Model):
     tagname = models.CharField(max_length=100,null=True)
 
     def __str__(self):
-        return self.user.username + self.postid + self.post_category
+        return self.user.username + str(self.postid )+ str(self.post_category)
 
 class Tag(models.Model):
     tagname = models.CharField(max_length=250, blank=True, unique=True)
