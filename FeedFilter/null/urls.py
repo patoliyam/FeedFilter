@@ -24,5 +24,10 @@ urlpatterns = [
     url(r'^register$',views.register, name='register'),
     url(r'^login$',views.login_view, name='login_view'),
     url(r'^logout$',views.logout_view, name='logout_view'),
-    url(r'^checklogin$',views.checklogin, name='checklogin')
+    url(r'^checklogin$',views.checklogin, name='checklogin'),
+    url(r'^addtag', views.addtag, name='addtag'),
+    url(r'^removetag', views.removetag, name='removetag'),
+    url(r'^fetchtag', views.fetchtag, name='fetchtag'),
+    url(r'^dashboard/$',views.dashboard, name='dashboard'),
+    url(r'^blocked_content/$',views.blocked_content, name='blocked_content')
 ]

@@ -4,16 +4,42 @@ from django.utils.translation import ugettext as _
 from django.contrib.auth.models import User
 
 SENTIMENT_TYPE_CHOICES = (
-    ('0', 'Obscene'),
+    ('0', 'Offensive'),
     ('1', 'Adult'),
     ('2', 'Racy'),
-    ('3', 'Other'),
+    ('3', 'Mature'),
 )
 
 POST_TYPE_CHOICES = (
     ('0', 'image'),
     ('1', 'text'),
 )
+
+POST_CATEGORY_CHOICES = (
+    ('0','i_to_a'),
+    ('1','t_to_a'),
+)
+
+TAG_CHOICES = (
+    ('0','generic'),
+    ('1','account'),
+)
+class UserTag(models.Model):
+    user = models.ForeignKey(User,null=True, on_delete=models.CASCADE)
+    tagname = models.CharField(max_length=250)
+    tag_type = models.CharField(max_length=1, choices=TAG_CHOICES, null=True)
+
+    def  __str__(self):
+        return self.user.username + self.tagname + str(self.tag_type)
+
+class UserPost(models.Model):
+    user = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
+    postid = models.CharField(max_length=250)
+    post_category = models.CharField(max_length=1,choices=POST_CATEGORY_CHOICES,null=True)
+    sentiment_score = models.FloatField(default=0.0)
+
+    def __str__(self):
+        return self.user.username + self.postid + self.post_category
 
 class Tag(models.Model):
     tagname = models.CharField(max_length=250, blank=True, unique=True)
@@ -32,10 +58,9 @@ class BlockedPost(models.Model):
 class Stats(models.Model):
     user = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
     sentiment_type = models.CharField(max_length=1, choices=SENTIMENT_TYPE_CHOICES, null=True)
-    count_0 = models.IntegerField(default=0)
-    count_1 = models.IntegerField(default=0)
-    count_2 = models.IntegerField(default=0)
-    count_3 = models.IntegerField(default=0)
+    count = models.IntegerField(default=0)
     def __str__(self):
-        return "Post Id is :  " + str(self.user.username) + "    -->    " + str(self.sentiment_type)
+        return "" + str(self.user.username) + "    -->    " + str(self.sentiment_type)
+
+
 
