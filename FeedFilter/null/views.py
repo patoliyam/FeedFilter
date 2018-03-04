@@ -233,13 +233,13 @@ def text_moderation(text_of_post, a, count, userquery, block_list, post_id, requ
             conn.request("POST", "/contentmoderator/moderate/v1.0/ProcessText/Screen?%s" % params, body, headers)
             response = conn.getresponse()
             data = response.read()
-            print(data)
             data = json.loads(data)
             conn.close()
             cat1 = data['Classification']['Category1']['Score']
             cat2 = data['Classification']['Category2']['Score']
             cat3 = data['Classification']['Category3']['Score']
             review = data['Classification']['ReviewRecommended']
+            print(review,cat1,cat2,cat3)
             if review:
                 if post_id not in block_list:
                     block_list.append(post_id)
@@ -499,19 +499,19 @@ def t_to_a(request):
             for t in userquery2:
                 tmp = UserPost(user=request.user,postid=post['id'],post_category='1',tagname=t)
                 tmp.save()
-                # all_threads.append(threading.Thread(target=text_filter, args=(text_of_post, index, count, userquery2, block_list, post['id'], request)))
-                # all_threads[index].start()
-                # index = index + 1
-                # all_threads.append(threading.Thread(target=sentiment_analyzer, args=(text_of_post, index, count, userquery2, block_list, post['id'], request)))
-                # all_threads[index].start()
-                # index = index + 1
+                all_threads.append(threading.Thread(target=text_filter, args=(text_of_post, index, count, userquery2, block_list, post['id'], request)))
+                all_threads[index].start()
+                index = index + 1
+                all_threads.append(threading.Thread(target=sentiment_analyzer, args=(text_of_post, index, count, userquery2, block_list, post['id'], request)))
+                all_threads[index].start()
+                index = index + 1
                 if (textmodvalue):
                     print("")
                     all_threads.append(threading.Thread(target=text_moderation, args=(text_of_post, index, count, userquery2, block_list, post['id'], request)))
                     all_threads[index].start()
                     index = index + 1
     start = time.time()
-    while (len(count) != index and time.time() - start < 100):
+    while (3*len(count) != index and time.time() - start < 100):
         pass
     # print("blocklist in t_to_a")
     # print(block_list)
