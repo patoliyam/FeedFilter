@@ -134,17 +134,18 @@ def image_filter(url_of_image, a, count, userquery, block_list, post_id, request
                                               text_or_url=url_of_image)
                             tmp.save()
                         block_list.append(post_id)
+        print("in image_filter")
         print(block_list)
         temp = []
         text_of_image = response.full_text_annotation.text
         print("text_of_image : ", text_of_image)
-        # sentiment_analyzer(text_of_image, '', temp, userquery, block_list, post_id, request)
+        sentiment_analyzer(text_of_image, '', temp, userquery, block_list, post_id, request)
 
-        # text_filter(text_of_image, '', temp, userquery, block_list, post_id, request)
+        text_filter(text_of_image, '', temp, userquery, block_list, post_id, request)
 
         if (textmodvalue):
             print("")
-            # text_moderation(text_of_image, '', temp, userquery, block_list, post_id, request)
+            text_moderation(text_of_image, '', temp, userquery, block_list, post_id, request)
 
     count.append(1)
 
@@ -175,7 +176,7 @@ def adult_racy_filter(url_of_image, a, count, userquery, block_list, post_id, re
             print(data['RacyClassificationScore'])
             print(data['AdultClassificationScore'])
             conn.close()
-            if data['RacyClassificationScore'] > 0.2:
+            if data['RacyClassificationScore'] > 0.4:
                 if (post_id not in block_list):
                     block_list.append(post_id)
                     if Stats.objects.filter(sentiment_type='2',user=request.user).count() == 0:
@@ -188,7 +189,7 @@ def adult_racy_filter(url_of_image, a, count, userquery, block_list, post_id, re
                     if BlockedPost.objects.filter(user=request.user, post_id=str(post_id)).count() == 0:
                         tmp = BlockedPost(user=request.user, post_id=str(post_id), post_type='0', text_or_url=url_of_image)
                         tmp.save()
-            elif data['AdultClassificationScore'] > 0.2:
+            elif data['AdultClassificationScore'] > 0.4:
                 if (post_id not in block_list):
                     block_list.append(post_id)
                     if Stats.objects.filter(sentiment_type='1',user=request.user).count() == 0:
@@ -201,6 +202,7 @@ def adult_racy_filter(url_of_image, a, count, userquery, block_list, post_id, re
                     if BlockedPost.objects.filter(user=request.user, post_id=str(post_id)).count() == 0:
                         tmp = BlockedPost(user=request.user, post_id=str(post_id), post_type='0', text_or_url=url_of_image)
                         tmp.save()
+            print("adult racy")
             print(block_list)
         except Exception as e:
             pass
@@ -244,7 +246,7 @@ def text_moderation(text_of_post, a, count, userquery, block_list, post_id, requ
                     if BlockedPost.objects.filter(user=request.user, post_id=str(post_id)).count() == 0:
                         tmp = BlockedPost(user=request.user, post_id=str(post_id), post_type='1', text_or_url=text_of_post)
                         tmp.save()
-            elif cat1 > 0.2 and (cat1>cat2 and cat1>cat3):
+            elif cat1 > 0.4 and (cat1>cat2 and cat1>cat3):
                 if post_id not in block_list:
                     block_list.append(post_id)
                     if Stats.objects.filter(user=request.user,sentiment_type='1').count() == 0:
@@ -257,7 +259,7 @@ def text_moderation(text_of_post, a, count, userquery, block_list, post_id, requ
                     if BlockedPost.objects.filter(user=request.user, post_id=str(post_id)).count() == 0:
                         tmp = BlockedPost(user=request.user, post_id=str(post_id), post_type='1', text_or_url=text_of_post)
                         tmp.save()
-            elif cat2 > 0.2 and (cat2>cat1 and cat2>cat3):
+            elif cat2 > 0.4 and (cat2>cat1 and cat2>cat3):
                 if post_id not in block_list:
                     block_list.append(post_id)
                     if Stats.objects.filter(user=request.user,sentiment_type='3').count() == 0:
@@ -270,7 +272,7 @@ def text_moderation(text_of_post, a, count, userquery, block_list, post_id, requ
                     if BlockedPost.objects.filter(user=request.user, post_id=str(post_id)).count() == 0:
                         tmp = BlockedPost(user=request.user, post_id=str(post_id), post_type='1', text_or_url=text_of_post)
                         tmp.save()
-            elif cat3 > 0.2 and (cat3>cat1 and cat3>cat2):
+            elif cat3 > 0.4 and (cat3>cat1 and cat3>cat2):
                 if post_id not in block_list:
                     block_list.append(post_id)
                     if Stats.objects.filter(user=request.user,sentiment_type='0').count() == 0:
@@ -320,9 +322,10 @@ def sentiment_analyzer(text_of_post, a, count, userquery, block_list, post_id, r
             print(data)
             conn.close()
             score = data['documents'][0]['score']
-            if UserPost.objects.filter(post_id=post_id, user=request.user).count() == 0:
-                tmp = UserPost(user=request.user, post_id=post_id, sentiment_score=score)
-                tmp.save()
+            for k in userquery:
+                if UserPost.objects.filter(post_id=post_id, user=request.user).count() > 0:
+                    tmp = UserPost(user=request.user, post_id=post_id, sentiment_score=score,tagname=k)
+                    tmp.save()
             if score < 0.5:
                 if post_id not in block_list:
                     block_list.append(post_id)
@@ -370,8 +373,6 @@ def text_filter(text_of_post, a, count, userquery, block_list, post_id, request)
 
         for query in userquery:
             if (query.lower() in text_of_post.lower()):
-                # ambiguity
-                print "coming inside" + query
                 if (Tag.objects.filter(tagname=query).count() == 0):
                     tmp = Tag(tagname=query, no_of_post=1)
                     tmp.save()
@@ -411,6 +412,8 @@ def text_filter(text_of_post, a, count, userquery, block_list, post_id, request)
                                         tmp = BlockedPost(user=request.user, post_id=str(post_id), post_type='1',
                                                           text_or_url=text_of_post)
                                         tmp.save()
+    print("in text filter")
+    print(block_list)
     count.append(1)
 
 
@@ -456,8 +459,8 @@ def i_to_a(request):
     # to check all the threads have completed
     while (2*len(count) != index and time.time() - start < 100):
         pass
-    # print("in i to a blocklist")
-    # print block_list
+    print("in i to a blocklist")
+    print block_list
     return JsonResponse({"status": True, "block_list": block_list})
 
 @csrf_exempt
@@ -487,22 +490,27 @@ def t_to_a(request):
             text_of_post = j.text
             post = soup.find('div')
 
-            if(UserPost.objects.filter(user=request.user,postid=post['id'],post_category='1').count() == 0):
-                tmp = UserPost(user=request.user,postid=post['id'],post_category='1')
+            userquery2 = []
+            for k in userquery:
+                if(UserPost.objects.filter(user=request.user,postid=post['id'],post_category='1',tagname=k).count() == 0):
+                    userquery2.append(k)
+
+            for t in userquery2:
+                tmp = UserPost(user=request.user,postid=post['id'],post_category='1',tagname=t)
                 tmp.save()
-                all_threads.append(threading.Thread(target=text_filter, args=(text_of_post, index, count, userquery, block_list, post['id'], request)))
+                all_threads.append(threading.Thread(target=text_filter, args=(text_of_post, index, count, userquery2, block_list, post['id'], request)))
                 all_threads[index].start()
                 index = index + 1
-                all_threads.append(threading.Thread(target=sentiment_analyzer, args=(text_of_post, index, count, userquery, block_list, post['id'], request)))
-                all_threads[index].start()
-                index = index + 1
-                if (textmodvalue):
-                    print("")
-                    all_threads.append(threading.Thread(target=text_moderation, args=(text_of_post, index, count, userquery, block_list, post['id'], request)))
-                    all_threads[index].start()
-                    index = index + 1
+                # all_threads.append(threading.Thread(target=sentiment_analyzer, args=(text_of_post, index, count, userquery2, block_list, post['id'], request)))
+                # all_threads[index].start()
+                # index = index + 1
+                # if (textmodvalue):
+                #     print("")
+                #     all_threads.append(threading.Thread(target=text_moderation, args=(text_of_post, index, count, userquery2, block_list, post['id'], request)))
+                #     all_threads[index].start()
+                #     index = index + 1
     start = time.time()
-    while (3*len(count) != index and time.time() - start < 100):
+    while (len(count) != index and time.time() - start < 100):
         pass
     # print("blocklist in t_to_a")
     # print(block_list)
@@ -544,7 +552,7 @@ def dashboard(request):
             stats2 = Stats.objects.filter(user=request.user, sentiment_type='2')[0].count
         if Stats.objects.filter(user=request.user, sentiment_type='3').count() > 0 :
             stats3 = Stats.objects.filter(user=request.user, sentiment_type='3')[0].count
-        total = UserPost.objects.filter(user=request.user).count()
+        total = UserPost.objects.filter(user=request.user).distinct('postid').count()
         print(total,stats0,stats1,stats2,stats3)
         stats4 = total - (stats0+stats1+stats2+stats3)
         if total > 0 :
@@ -560,9 +568,9 @@ def dashboard(request):
         # print "generic tags : " , generic_tags
         # # # print "stats : ", stats
         # print "account tags : ", account_tags
-        myset = UserPost.objects.filter(user=request.user)
+        myset = UserPost.objects.filter(user=request.user).distinct('postid')
         total = 0
-        count = UserPost.objects.filter(user=request.user).count()
+        count = myset.count()
         for i in myset:
             total = total+i.sentiment_score
         if count>0:

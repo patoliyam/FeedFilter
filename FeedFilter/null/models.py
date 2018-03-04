@@ -37,6 +37,7 @@ class UserPost(models.Model):
     postid = models.CharField(max_length=250)
     post_category = models.CharField(max_length=1,choices=POST_CATEGORY_CHOICES,null=True)
     sentiment_score = models.FloatField(default=0.0)
+    tagname = models.CharField(max_length=100,null=True)
 
     def __str__(self):
         return self.user.username + self.postid + self.post_category
