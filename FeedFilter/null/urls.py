@@ -28,6 +28,8 @@ urlpatterns = [
     url(r'^addtag', views.addtag, name='addtag'),
     url(r'^removetag', views.removetag, name='removetag'),
     url(r'^fetchtag', views.fetchtag, name='fetchtag'),
-    url(r'^dashboard/$',views.dashboard, name='dashboard'),
-    url(r'^blocked_content/$',views.blocked_content, name='blocked_content')
+    url(r'^fb_dashboard/$',views.facebook_dashboard, name='facebook_dashboard'),
+    url(r'^fb_blocked_content/$',views.facebook_blocked_content, name='facebook_blocked_content'),
+    url(r'^ttr_dashboard/$',views.twitter_dashboard, name='twitter_dashboard'),
+    url(r'^ttr_blocked_content/$',views.twitter_blocked_content, name='twitter_blocked_content')
 ]

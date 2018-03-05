@@ -36,14 +36,43 @@
 		</div>
 	</div>
 
-	<div id="extension" style="">
+	<div id="extension" style="display: none;">
 		<button id="logout_btn"> LOGOUT</button>
 		<div class="checkbox container"><input type="checkbox" id="image_moderation" name="image_moderation" checked value="">Image moderation<br></div>
 		<div class="checkbox container"><input type="checkbox" id="text_moderation" name="text_moderation" checked value="">Text moderation<br></div>
-		<form action="" class="form-group container">
-			<div class="form-group"><input class="form-control" type="text" name="filtertags" id="filter" placeholder="Enter Keyword to block"></div>
-			<button class="btn" class="form-control" id="btnSubmit">Submit</button>
-		</form>
+		<div class="form-group">
+			<input class="form-control" type="text" name="filtertags" id="filter" placeholder="Enter Keyword to block">
+			<input type="radio" name="tag_type" value="0" checked>Genreic Tag
+				<input type="radio" name="tag_type" value="1">Specific User/Page Name<br>
+		</div>
+		For timed tags (optional) :
+		<select name="dd" id="dd">
+		  <option selected="selected" value="0">Day</option>
+		  <option value="1">1</option>
+		  <option value="2">2</option>
+		  <option value="3">3</option>
+		  <option value="4">4</option>
+		  <option value="5">5</option>
+		  <option value="6">6</option>
+		  <option value="7">7</option>
+		</select>
+		<select name="hh" id="hh">
+		  <option selected="selected" value="0">Hour</option>
+		  <option value="1">1</option>
+		  <option value="2">2</option>
+		  <option value="3">3</option>
+		  <option value="4">4</option>
+		  <option value="5">5</option>
+		  <option value="6">6</option>
+		  <option value="7">7</option>
+		  <option value="8">8</option>
+		  <option value="9">9</option>
+		  <option value="10">10</option>
+		  <option value="12">12</option>
+		  <option value="15">15</option>
+		  <option value="20">20</option>
+		</select>
+		<button class="btn" class="form-control" id="btnSubmit">Submit</button>
 		<br>
 		<div class="container">
 			<h3>Blocked Tags</h3>
@@ -52,8 +81,7 @@
 		</div>
 
 		<div class="container">
-			<h3>No of block posts</h3>
-			<h3 id="no_blocked"></h3>
+			<h3 id="dashboard">Your Dashboard</h3></a>
 		</div>
 	</div>
 </div>

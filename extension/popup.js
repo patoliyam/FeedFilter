@@ -1,62 +1,137 @@
 //variable to store current tag entered 
 var data = "";
-//listener : it runs when we get data from content.js(fb)
 chrome.runtime.onMessage.addListener(function(request, sender,sendResponse) {
     console.log("data from fb in extension");
-    // var obj = request;
     sendResponse({userquery:data});
-
 });
 
 document.addEventListener('DOMContentLoaded',function(){
-    
-    $.ajax({
-        type: "POST",
-        url: "https://d771d65c.ngrok.io/checklogin",
-        success: function(response){
-            if(response.status){
-                $('#login_register').hide();
-                $('#extension').show();
-            }
-            else{
-                $('#extension').hide();
-                $('#login').show();
-            }
-        },
-        error: function(response){
-            console.log("error in api call");
-        }
-    });
+	chrome.tabs.query({active: true, currentWindow: true},function (tabs) {
+		tabURL = tabs[0].url;
+		fbre = new RegExp("http.*:\/\/.*facebook\..*\/.*");
+		twitterre = new RegExp("http.*:\/\/.*twitter\..*\/.*");
+	    var fburl = fbre.test(tabURL);
+	    var twitterurl = twitterre.test(tabURL);
+	    var site=-1;
+	    console.log(fburl);
+	    console.log(twitterurl);
+	    if(fburl)
+	    {
+	    	site = 0;
+	    }
+	    else if(twitterurl)
+	    {
+	    	site = 1;
+	    }
+	    else
+	    {
+	    	site = -1;
+	    }
+	    console.log("site:");
+	    console.log(site);
+	    $.ajax({
+                type: "POST",
+                url: "https://43ef14f2.ngrok.io/checklogin",
+                success: function(response){
+                    if(response.status){
+                        $('#login_register').hide();
+                        $('#extension').show();
+                        $.ajax({
+                            type: "GET",
+                            url: "https://43ef14f2.ngrok.io/fetchtag",
+                            data: {
+                                site: site
+                            },
+                            success: function(response){
+                                if(response.status){
+                                    console.log(response.usertag);
+                                    for (var i in response.usertag)
+                                    {
+                                        var listele = '<li id="'+(response.usertag[i])+(response.usertagtype[i])+'">'+response.usertag[i]+'</li>';
+                                        $('#tags').append(listele);
+                                    }
+                                }
+                            },
+                            error: function(response){
+                                console.log("error in fetch api call");
+                            }   
+                        });    
+                    }
+                    else{
+                        $('#extension').hide();
+                        $('#login').show();
+                    }
+                },
+                error: function(response){
+                    console.log("error in api call");
+                }
+            });
+        if(site>=0)
+	    {	        
+		    $('#btnSubmit').on('click',function(){
+		        tagname = $('#filter').val();
+                radiobtnvalue = $("input[name=tag_type]:checked").val()
+                dd = $('#dd').val();
+                hh = $('#hh').val();
+                valid_time = dd*86400 + hh*3600;
+                console.log(valid_time);
+		        //bring the old list . Append the new tags
+		        // chrome.storage.sync.get({taglist: []}, function(item) {
+		        //     item['taglist'].push(data);
+		        //     //set the new list
+		        //     chrome.storage.sync.set({'taglist': item['taglist']}, function(items) {
+		        //     });
+		        // });
 
-    chrome.storage.sync.get({taglist: []}, function(item) {
-        for (var i in item['taglist'])
-        {
-            var listele = '<li class="removetag" id="'+item['taglist'][i]+'">'+item['taglist'][i]+'</li>';
-            $('#tags').append(listele);
-        }
-    }); 
-    //as popup loads we send a msg asking for posts html
-    $('#btnSubmit').on('click',function(){
-        data = $('#filter').val();
-        //bring the old list . Append the new tags
-        chrome.storage.sync.get({taglist: []}, function(item) {
-            item['taglist'].push(data);
-            //set the new list
-            chrome.storage.sync.set({'taglist': item['taglist']}, function(items) {
-            });
-        });     
-        //push in frontend
-        var listele = '<li class="removetag" id="'+ data +'">'+data+'</li>';
-        $('#tags').append(listele);
-        // console.log(data);
-        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-            chrome.tabs.sendMessage(tabs[0].id, {type: "hello"}, function(response) {
-                console.log("inside the response");
-                //console.log(response);s
-            });
-        }); 
-    });
+		        $.ajax({
+		            type: "GET",
+		            url: "https://43ef14f2.ngrok.io/addtag",
+		            data:{
+		                tagname:tagname,
+		                tagtype:radiobtnvalue,
+		                site:site,
+                        valid_time:valid_time
+		            },
+		            success: function(response){
+		                if(response.status){
+		                    var listele = '<li id="'+ tagname+radiobtnvalue +'">'+tagname+'</li>';
+		                    $('#tags').append(listele);
+		                    $('#filter').val(" ");
+		                }
+		            },
+		            error: function(response){
+		                console.log("error in addtag api call");
+		            }
+		        });     
+		        //push in frontend
+		        
+		    });
+		}
+	});
 });
+/*    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+        var username = $('#login_username').val();
+        var password = $('#login_password').val();
+        console.log(username,password);
+        chrome.tabs.sendMessage(tabs[0].id, {type: "hello",username:username,password:password}, function(response) {
+        });
+    });*/
+/*chrome.storage.sync.get({taglist: []}, function(item) {
+    for (var i in item['taglist'])
+    {
+        var listele = '<li class="removetag" id="'+item['taglist'][i]+'">'+item['taglist'][i]+'</li>';
+        $('#tags').append(listele);
+    }
+}); */
+//as popup loads we send a msg asking for posts html
+
+    // chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    //     chrome.tabs.sendMessage(tabs[0].id, {type: "hello",myarg:"myval"}, function(response) {
+    //         console.log("inside the response");
+    //         console.log(response);
+    //     });
+    // });
+
 
 // $(document).ready(function(){
 //     setInterval(function(){
@@ -77,18 +152,7 @@ $(document).ready(function(){
     document.getElementById("register_btn").addEventListener("click", register_fun);
     document.getElementById("login_btn").addEventListener("click", login_fun);
     document.getElementById("logout_btn").addEventListener("click", logout_fun);
-
-    $('.removetag').click(function(){
-        var value = $(this).text();
-        $('#'+value).remove();
-        chrome.storage.sync.get({taglist: []}, function(item) {
-            var index = item['taglist'].indexOf(value);
-            item['taglist'].splice(index, 1);
-            //set the new list
-            chrome.storage.sync.set({'taglist': item['taglist']}, function(items) {
-            });
-        }); 
-    });
+    document.getElementById("dashboard").addEventListener("click", dashboard_fun);
 });
 
 $(document).ready(function(){
@@ -113,8 +177,6 @@ $(document).ready(function(){
     });
 });
 
-
-
 $(document).ready(function() {
     $('#image_moderation').change(function() {
         if($(this).is(":checked")) {
@@ -136,6 +198,7 @@ $(document).ready(function() {
         }
     });
 });
+
 $(document).ready(function() {
     $('#text_moderation').change(function() {
         if($(this).is(":checked")) {
@@ -159,9 +222,6 @@ $(document).ready(function() {
 });
 
 
-
-
-
 function show_register_form()
 {
     $('#login').hide();
@@ -175,7 +235,7 @@ function register_fun()
 
     $.ajax({
         type: "POST",
-        url: "https://d771d65c.ngrok.io/register",
+        url: "https://43ef14f2.ngrok.io/register",
         data:{
             username: username,
             password: password
@@ -183,8 +243,14 @@ function register_fun()
         success: function(data){
             if (data.status)
             {
-                $('#login_register').hide();
+                $('#register').hide();
+                $('#login').hide();
                 $('#extension').show();
+                chrome.storage.sync.set({'username': username}, function(items) {
+	                chrome.storage.sync.set({'password': password}, function(items) {
+	                    console.log("set both things");
+	                });    
+	            });
             }
             else
             {
@@ -205,14 +271,20 @@ function login_fun()
 
     $.ajax({
         type: "POST",
-        url: "https://d771d65c.ngrok.io/login",
+        url: "https://43ef14f2.ngrok.io/login",
         data:{
             username: username,
             password: password
         },
         success: function(data){
-            $('#login_register').hide();
+            $('#login').hide();
+            $('#register').hide();
             $('#extension').show();
+            chrome.storage.sync.set({'username': username}, function(items) {
+                chrome.storage.sync.set({'password': password}, function(items) {
+                    console.log("set both things");
+                });    
+            });
         },
         error: function(error){
             console.log("error in register ajax request");
@@ -224,11 +296,15 @@ function logout_fun()
 {
     $.ajax({
         type: "POST",
-        url: "https://d771d65c.ngrok.io/logout",
+        url: "https://43ef14f2.ngrok.io/logout",
         success: function(data){
-            console.log("here");
             $('#extension').hide();
-            $('#login_register').show();
+            $('#login').show();
+            chrome.storage.sync.set({'username': ""}, function(items) {
+                chrome.storage.sync.set({'password': ""}, function(items) {
+                    console.log("unset both things");
+                });    
+            });
         },
         error: function(error){
             console.log("error in logout ajax request");
@@ -236,6 +312,20 @@ function logout_fun()
     });
 }
 
+function dashboard_fun()
+{
+    $(document).ready(function(){
+        console.log("started in sending login call content.js");    
+        chrome.storage.sync.get('username', function(item) {
+            var username = item['username'];
+            chrome.storage.sync.get('password', function(item) {
+                var password = item['password'];
+                console.log(username,password);
+                window.open("localhost:8000/facebook_dashboard?username="+username+"&password="+password,'_blank');
+            });
+        });
+    });
+}
 //to execute a script at a site 
 
 //var script = 'alert("woow")';

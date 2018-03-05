@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+
+	<title>Facebook Dashboard|FeedFilter</title>
+
+	<meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport' />
+    <meta name="viewport" content="width=device-width" />
+
+
+    <!-- Bootstrap core CSS     -->
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet" />
+
+    <!-- Animation library for notifications   -->
+    <link href="/static/css/animate.min.css" rel="stylesheet"/>
+
+    <!--  Light Bootstrap Table core CSS    -->
+    <link href="/static/css/light-bootstrap-dashboard.css?v=1.4.0" rel="stylesheet"/>
+
+
+    <!--  CSS for Demo Purpose, don't include it in your project     -->
+    <link href="/static/css/demo.css" rel="stylesheet" />
+
+
+    <!--     Fonts and icons     -->
+    <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href='http://fonts.googleapis.com/css?family=Roboto:400,700,300' rel='stylesheet' type='text/css'>
+    <link href="/static/css/pe-icon-7-stroke.css" rel="stylesheet" />
+
+</head>
+<!--   Core JS Files   -->
+    <script src="/static/js/jquery.3.2.1.min.js" type="text/javascript"></script>
+	<script src="/static/js/bootstrap.min.js" type="text/javascript"></script>
+
+	<!--  Charts Plugin -->
+	<script src="/static/js/chartist.min.js"></script>
+
+    <!-- Light Bootstrap Table Core javascript and methods for Demo purpose -->
+	<script src="/static/js/light-bootstrap-dashboard.js?v=1.4.0"></script>
+
+	<!-- Light Bootstrap Table DEMO methods, don't include it in your project! -->
+	<!--<script src="/js/demo.js"></script>-->
+
+	<script type="text/javascript">
+        console.log("shubz worte");
+    	$(document).ready(function(){
+        	demo.initChartist();
+    	});
+
+        function deleteTag(id) {
+                console.log(id);
+                var row_id = id.replace(/delete/g, 'row');
+                console.log(row_id);
+                var tag_id = id.replace(/delete/g, '');
+                $.ajax({
+                    type: "GET",
+                    url: "/removetag",
+                    data: {
+                        tagtype: "0",
+                        tagname: tag_id,
+                        site: "0"
+                    },
+                    success: function (data) {
+                        $('#'+row_id).hide();
+                        }
+                });
+        }
+
+        function deleteAccount(id) {
+                var row_id = id.replace(/delete/g, 'row');
+                console.log(row_id);
+                var account_id = id.replace(/delete/g, '');
+                $.ajax({
+                    type: "GET",
+                    url: "/removetag",
+                    data: {
+                        tagtype: "1",
+                        tagname: account_id,
+                        site : "0"
+                    },
+                    success: function (data) {
+                        $('#'+row_id).hide();
+                        }
+                });
+        }
+
+        function addTag(id) {
+                var old_row_id = id.replace(/add/g, 'row');
+                var tag_id = id.replace(/add/g, '');
+                $.ajax({
+                    type: "GET",
+                    url: "/addtag",
+                    data: {
+                        tagtype : '0',
+                        tagname: tag_id,
+                        site : "0"
+                    },
+                    success: function (data) {
+                        $('#'+old_row_id).remove();
+                        $('#tag_generic_body').append('<tr id="'+tag_id+'row"><td>' + tag_id + '</td><td class="td-actions"><button type="button" rel="tooltip" title="Remove Tag" class="btn btn-danger btn-simple btn-xs" onclick="deleteTag(this.id)" id="' +tag_id+'delete">Remove</button></td></tr>');
+                        }
+                });
+        }
+
+        var type = ['','info','success','warning','danger'];
+        demo = {
+            initPickColor: function(){
+                $('.pick-class-label').click(function(){
+                    var new_class = $(this).attr('new-class');
+                    var old_class = $('#display-buttons').attr('data-class');
+                    var display_div = $('#display-buttons');
+                    if(display_div.length) {
+                    var display_buttons = display_div.find('.btn');
+                    display_buttons.removeClass(old_class);
+                    display_buttons.addClass(new_class);
+                    display_div.attr('data-class', new_class);
+                    }
+                });
+            },
+
+        checkScrollForTransparentNavbar: debounce(function() {
+                $navbar = $('.navbar[color-on-scroll]');
+                scroll_distance = $navbar.attr('color-on-scroll') || 500;
+
+                if($(document).scrollTop() > scroll_distance ) {
+                    if(transparent) {
+                        transparent = false;
+                        $('.navbar[color-on-scroll]').removeClass('navbar-transparent');
+                        $('.navbar[color-on-scroll]').addClass('navbar-default');
+                    }
+                } else {
+                    if( !transparent ) {
+                        transparent = true;
+                        $('.navbar[color-on-scroll]').addClass('navbar-transparent');
+                        $('.navbar[color-on-scroll]').removeClass('navbar-default');
+                    }
+                }
+        }, 17),
+
+        {% comment %}initDocChartist: function(){
+                var dataPreferences = {
+                series: [
+                    [0, 0, 0, 100]
+                ]
+            };
+
+            var optionsPreferences = {
+                donut: true,
+                donutWidth: 40,
+                startAngle: 0,
+                total: 100,
+                showLabel: false,
+                axisX: {
+                    showGrid: false
+                }
+            };
+
+                Chartist.Pie('#chartPreferences', dataPreferences, optionsPreferences);
+
+                Chartist.Pie('#chartPreferences', {
+                  labels: [{{label0}}+'%', {{label1}}+'%', {{label2}}+'%', {{label3}}+'%', {{label4}}+'%'],
+                  series: [{{stats0}} , {{stats1}} , {{stats2}} , {{stats3}}, {{stats4}}]
+                });
+
+                 Chartist.Pie('#chartPreferences2', dataPreferences, optionsPreferences);
+
+                Chartist.Pie('#chartPreferences2', {
+                  labels: ['0','0'],
+                  series: [0,0]
+                });
+            },{% endcomment %}
+
+        initChartist: function(){
+            var dataPreferences = {
+                series: [
+                    [0, 0, 0, 100]
+                ]
+            };
+
+            var optionsPreferences = {
+                donut: true,
+                donutWidth: 40,
+                startAngle: 0,
+                total: 100,
+                showLabel: false,
+                axisX: {
+                    showGrid: false
+                }
+            };
+
+            Chartist.Pie('#chartPreferences', dataPreferences, optionsPreferences);
+
+            Chartist.Pie('#chartPreferences', {
+              labels: [{{label0}}+'%', {{label1}}+'%', {{label2}}+'%', {{label3}}+'%', {{label4}}+'%'],
+              series: [{{stats0}} , {{stats1}} , {{stats2}} , {{stats3}}, {{stats4}}]
+            });
+
+            Chartist.Pie('#chartPreferences2', dataPreferences, optionsPreferences);
+
+            Chartist.Pie('#chartPreferences2', {
+              labels: [{{happy_value}}+'%',{{ sad_value }}+'%'],
+              series: [{{ happy_value }}, {{ sad_value }}]
+            });
+            }
+        }
+    </script>
+
+<body>
+
+<div class="wrapper">
+    <div class="sidebar" data-color="purple" data-image="/img/sidebar-5.jpg">
+
+    <!--
+
+        Tip 1: you can change the color of the sidebar using: data-color="blue | azure | green | orange | red | purple"
+        Tip 2: you can also add an image using data-image tag
+
+    -->
+
+    	<div class="sidebar-wrapper">
+            <div class="logo">
+                <a href="#" class="simple-text">
+                    FeedFilter
+                </a>
+            </div>
+            <ul class="nav">
+                <li class="active">
+                    <a href="/fb_dashboard" >
+                        <i class="pe-7s-graph"></i>
+                        <p>Facebook Dashboard</p>
+                    </a>
+                </li>
+                <li>
+                    <a href="/ttr_dashboard" >
+                        <i class="pe-7s-graph"></i>
+                        <p>Twitter Dashboard</p>
+                    </a>
+                </li>
+                <li>
+                    <a href="/fb_blocked_content">
+                        <i class="pe-7s-note2"></i>
+                        <p>Facebook Blocked Content</p>
+                    </a>
+                </li>
+                <li>
+                    <a href="/ttr_blocked_content">
+                        <i class="pe-7s-note2"></i>
+                        <p>Twitter Blocked Content</p>
+                    </a>
+                </li>
+            </ul>
+    	</div>
+    </div>
+
+    <div class="main-panel">
+        <nav class="navbar navbar-default navbar-fixed">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navigation-example-2">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="#">Facebook Dashboard</a>
+                </div>
+            </div>
+        </nav>
+
+
+        <div class="content">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card">
+
+                            <div class="header">
+                                <h4 class="title">Post Content</h4>
+                                <p class="category">Types of posts</p>
+                            </div>
+                            <div class="content">
+                                <div id="chartPreferences" class="ct-chart ct-perfect-fourth"></div>
+
+                                <div class="footer">
+                                    <div class="legend">
+                                        <i class="fa fa-circle text-info"></i> Offensive
+                                        <i class="fa fa-circle text-danger"></i> Adult
+                                        <i class="fa fa-circle text-warning"></i> Racy
+                                        <i class="fa fa-circle" style="color: #9368E9;"></i> Mature
+                                        <i class="fa fa-circle text-success"></i> Others
+                                    </div>
+                                    <hr>
+                                    <div class="stats">
+                                        <i class="fa fa-clock-o"></i> Updated
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="header">
+                                <h4 class="title">Suggested Tags</h4>
+                                <p class="category">Here are some suggested tags for you.</p>
+                            </div>
+                            <div class="content table-responsive table-full-width">
+                                <table id="" class="table table-hover table-striped">
+                                    <thead>
+                                    <th>Tag </th>
+                                    <th></th>
+                                    </thead>
+                                    <tbody>
+                                      {% for tags in tags_to_suggest %}
+                                        <tr id="{{tags.tagname}}row">
+                                            <td>{{ tags.tagname }}</td>
+
+                                            <td class="td-actions">
+                                                    <button type="button" rel="tooltip" title="Add Tag" class="btn btn-info btn-simple btn-xs" onclick="addTag(this.id)" id="{{tags.tagname}}add">
+                                                        Add
+                                                    </button>
+                                        </td>
+                                        </tr>
+                                      {% endfor %}
+                                    </tbody>
+                                </table>
+
+                            </div>
+                        </div>
+                    </div>
+                     <div class="col-md-4">
+                        <div class="card">
+
+                            <div class="header">
+                                <h4 class="title">Feed Sentiment</h4>
+                                <p class="category">Overall sentiment of posts of feed</p>
+                            </div>
+                            <div class="content">
+                                <div id="chartPreferences2" class="ct-chart ct-perfect-fourth"></div>
+
+                                <div class="footer">
+                                    <div class="legend">
+                                        <i class="fa fa-circle text-info"></i> Positive Sentiment
+                                        <i class="fa fa-circle text-danger"></i> Negative Sentiment
+                                    </div>
+                                    <hr>
+                                    <div class="stats">
+                                        <i class="fa fa-clock-o"></i> Updated
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+
+                <div class="row">
+                    <div class="col-md-6">
+                       <div class="card">
+                            <div class="header">
+                                <h4 class="title">Existing Tags</h4>
+                                <p class="category">Here are tags added by you.</p>
+                            </div>
+                            <div class="content table-responsive table-full-width">
+                                <table id = "tag_generic" class="table table-hover table-striped">
+                                    <thead>
+                                    <th>Tag </th>
+                                    </thead>
+                                    <tbody id ="tag_generic_body">
+                                    {% for tags in generic_enum %}
+                                        <tr id="{{ tags.0.tagname }}row">
+                                            <td>{{ tags.0.tagname }}</td>
+                                            <td>{{ tags.1 }} Days</td>
+                                            <td>{{ tags.2 }} Hours</td>
+                                            <td class="td-actions">
+                                                <button type="button" rel="tooltip" title="Remove Tag" class="btn btn-danger btn-simple btn-xs" onclick="deleteTag(this.id)" id="{{tags.0.tagname}}delete">
+                                                    Remove
+                                                </button>
+                                            </td>
+                                        </tr>
+                                {% endfor %}
+                                    </tbody>
+                                </table>
+
+                            </div>
+                        </div>
+                    </div>
+                      <div class="col-md-6">
+                       <div class="card">
+                            <div class="header">
+                                <h4 class="title">Account/Group/Page name</h4>
+                                <p class="category">Here are account tags added by you.</p>
+                            </div>
+                            <div class="content table-responsive table-full-width">
+                                <table id = "tag_account" class="table table-hover table-striped">
+                                    <thead>
+                                    <th>Account</th>
+
+                                    </thead>
+                                    <tbody id="tag_account_body">
+                                    {% for tags in account_enum %}
+                                        {{ tags }}
+                                        <tr id="{{ tags.0.tagname }}row">
+                                            <td>{{ tags.0.tagname }}</td>
+                                            <td>{{ tags.1 }} Days</td>
+                                            <td>{{ tags.2 }} Hours</td>
+                                            <td class="td-actions">
+                                                    <button type="button" rel="tooltip" title="Remove Account" class="btn btn-danger btn-simple btn-xs" onclick="deleteAccount(this.id)" id="{{tags.0.tagname}}delete">
+                                                        Remove
+                                                    </button>
+                                            </td>
+                                        </tr>
+                                {% endfor %}
+                                    </tbody>
+                                </table>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+
+    </div>
+</div>
+
+
+</body>
+
+
+</html>
