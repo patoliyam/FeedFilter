@@ -44,19 +44,19 @@ class UserPost(models.Model):
     user = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
     postid = models.CharField(max_length=250)
     post_category = models.CharField(max_length=1,choices=POST_CATEGORY_CHOICES,null=True)
-    sentiment_score = models.FloatField(default=0.0)
+    sentiment_score = models.FloatField(default=0.5)
     tagname = models.CharField(max_length=100,null=True)
     site = models.CharField(max_length=1, choices=SITE_CHOICES, null=True)
 
     def __str__(self):
-        return self.user.username + str(self.postid )+ str(self.post_category)
+        return self.user.username +" "+ str(self.postid )+" "+ str(self.post_category) + " "+ str(self.sentiment_score) + " " + str(self.tagname)
 
 class Tag(models.Model):
     tagname = models.CharField(max_length=250, blank=True, unique=True)
     no_of_post = models.IntegerField(default=0)
     site = models.CharField(max_length=1, choices=SITE_CHOICES, null=True)
     def __str__(self):
-        return self.tagname
+        return str(self.tagname) + " " + str(self.no_of_post) + " " + str(self.site)
 
 class BlockedPost(models.Model):
     user = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
@@ -65,7 +65,7 @@ class BlockedPost(models.Model):
     text_or_url = models.CharField(max_length=2000, null=True)
     site = models.CharField(max_length=1, choices=SITE_CHOICES, null=True)
     def __str__(self):
-        return self.post_id
+        return self.post_id + " " + str(self.site)
 
 class Stats(models.Model):
     user = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
@@ -73,7 +73,7 @@ class Stats(models.Model):
     count = models.IntegerField(default=0)
     site = models.CharField(max_length=1, choices=SITE_CHOICES, null=True)
     def __str__(self):
-        return "" + str(self.user.username) + "    -->    " + str(self.sentiment_type)
+        return "" + str(self.user.username) + "  " + str(self.sentiment_type)  + " " + str(self.count) + " " + str(self.site)
 
 
 

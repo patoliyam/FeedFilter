@@ -134,16 +134,15 @@ def image_filter(url_of_image, a, count, userquery, block_list, post_id, request
                         block_list.append(post_id)
         print("in image_filter")
         print(block_list)
-        # temp = []
-        # text_of_image = response.full_text_annotation.text
-        # print("text_of_image : ", text_of_image)
-        # sentiment_analyzer(text_of_image, '', temp, userquery, block_list, post_id, request,site)
-        #
-        # text_filter(text_of_image, '', temp, userquery, block_list, post_id, request,site)
-        #
-        # if (textmodvalue):
-        #     print("")
-        #     text_moderation(text_of_image, '', temp, userquery, block_list, post_id, request,site)
+        temp = []
+        text_of_image = response.full_text_annotation.text
+        print("text_of_image : ", text_of_image)
+        sentiment_analyzer(text_of_image, '', temp, userquery, block_list, post_id, request,site)
+
+        text_filter(text_of_image, '', temp, userquery, block_list, post_id, request,site)
+
+        if (textmodvalue):
+            text_moderation(text_of_image, '', temp, userquery, block_list, post_id, request,site)
 
     count.append(1)
 
@@ -234,7 +233,7 @@ def text_moderation(text_of_post, a, count, userquery, block_list, post_id, requ
             cat2 = data['Classification']['Category2']['Score']
             cat3 = data['Classification']['Category3']['Score']
             review = data['Classification']['ReviewRecommended']
-            print(review,cat1,cat2,cat3)
+            # print(review,cat1,cat2,cat3)
             if cat1 > 0.4 and (cat1>cat2 and cat1>cat3):
                 if post_id not in block_list:
                     block_list.append(post_id)
@@ -311,6 +310,7 @@ def sentiment_analyzer(text_of_post, a, count, userquery, block_list, post_id, r
             data = json.loads(data)
             conn.close()
             score = data['documents'][0]['score']
+            # print("sentiment : ", data)
             for k in userquery:
                 if UserPost.objects.filter(postid=post_id, user=request.user, site = site).count() > 0:
                     print(score)
@@ -388,7 +388,7 @@ def text_filter(text_of_post, a, count, userquery, block_list, post_id, request,
                         for key in keyword:
                             match = dice_coefficient(key, query)
                             if match > 0.4:
-                                # print ("Key :" + str(key) + "  Query : " + str(query) + "  Match : " + str(match)+"post id " + post_id)
+                                print ("Key :" + str(key) + "  Query : " + str(query) + "  Match : " + str(match)+"post id " + post_id)
                                 # ambiguity
                                 if (Tag.objects.filter(tagname=key, site = site).count() == 0):
                                     tmp = Tag(tagname=key, site = site, no_of_post=1)
@@ -419,10 +419,18 @@ def i_to_a(request):
     i = 0
     userquery_data = UserTag.objects.filter(user=request.user, site = site)
     for i in userquery_data:
-        if(time.time() - float(i.created_time.strftime('%s')) < i.valid_time):
-            userquery.append(i.tagname.lower())
+        if i.valid_time is not None:
+            if(time.time() - float(i.created_time.strftime('%s')) < i.valid_time):
+                if str(i.tag_type)=='0':
+                    userquery.append(i.tagname.lower())
+            else:
+                i.delete()
+                print("udda in i_to_A")
         else:
-            i.delete()
+            if str(i.tag_type)=='0':
+                userquery.append(i.tagname.lower())
+
+
     for i in range(0,len(userquery)):
         if Tag.objects.filter(tagname=userquery[i], site = site).count() == 0:
             tmp = Tag(tagname=userquery[i], site = site, no_of_post=0)
@@ -432,7 +440,6 @@ def i_to_a(request):
     block_list = []
     for i in request.POST:
         soup = BeautifulSoup(request.POST.get(i), "html.parser")
-        #         # print request.POST.get(i)
         src_of_imgs = soup.findAll('img', attrs={'class': 'scaledImageFitWidth'})
         if src_of_imgs is not None:
             for j in src_of_imgs:
@@ -442,25 +449,66 @@ def i_to_a(request):
                     if (UserPost.objects.filter(user=request.user, site = site, postid=post['id'], post_category='0',tagname=k).count() == 0):
                         userquery2.append(k)
                 for t in userquery2:
-                    tmp = UserPost(user=request.user, site = site, postid=post['id'], post_category='0', tagname=t)
-                    tmp.save()
+                    if(UserPost.objects.filter(user=request.user, site = site, postid=post['id'], post_category='0', tagname=t).count() == 0):
+                        tmp = UserPost(user=request.user, site = site, postid=post['id'], post_category='0', tagname=t)
+                        tmp.save()
                     all_threads.append(threading.Thread(target=image_filter, args=(j['src'], index, count, userquery, block_list, post['id'], request,textmodvalue,site)))
                     all_threads[index].start()
                     index = index + 1
-                # if imagemodvalue:
-                #     print("imagemodvalue")
-                #     tmp = UserPost(user=request.user, site=site, postid=post['id'], post_category='0', tagname="dummy")
-                #     tmp.save()
-                #     all_threads.append(threading.Thread(target=adult_racy_filter, args=(j['src'], index, count, userquery, block_list, post['id'], request, site)))
-                #     all_threads[index].start()
-                #     index = index + 1
+                if imagemodvalue:
+                    if(UserPost.objects.filter(user=request.user, site = site, postid=post['id'], post_category='0').count() == 0):
+                        tmp = UserPost(user=request.user, site=site, postid=post['id'], post_category='0', tagname="dummy")
+                        tmp.save()
+                    all_threads.append(threading.Thread(target=adult_racy_filter, args=(j['src'], index, count, userquery, block_list, post['id'], request, site)))
+                    all_threads[index].start()
+                    index = index + 1
     start = time.time()
     # to check all the threads have completed
-    while (len(count) != index and time.time() - start < 100):
+    while (len(count) != index and time.time() - start < 40):
         pass
     print("in i to a blocklist")
     print block_list
     return JsonResponse({"status": True, "block_list": block_list})
+
+@csrf_exempt
+def name_filter(request):
+    site = request.POST.get('site')
+    userquery = []
+    names = []
+    block_list = []
+    userquery_data = UserTag.objects.filter(user=request.user, site=site)
+    for i in userquery_data:
+        if i.valid_time is not None:
+            if (time.time() - float(i.created_time.strftime('%s')) < i.valid_time):
+                if str(i.tag_type)=='1':
+                    userquery.append(i.tagname.lower())
+            else:
+                i.delete()
+        else:
+            if (str(i.tag_type)=='1'):
+                    userquery.append(str(i.tagname).lower())
+    for i in request.POST:
+        soup = BeautifulSoup(request.POST.get(i), "html.parser")
+        postname = soup.findAll('div', attrs={'class': '_6a _5u5j _6b'})
+        for p in postname:
+            postnamedata = p.findAll('span',attrs={'class': 'fwb fcg'})
+            for i in postnamedata:
+                a_tags = i.findAll('a')
+                for i in a_tags:
+                    names.append(str(i.contents[0]).lower())
+            post = soup.find('div')
+            postid = post['id']
+            for i in userquery:
+                if(i.lower() in names):
+                    block_list.append(postid)
+                    if BlockedPost.objects.filter(user=request.user, site=site, post_id=str(postid)).count() == 0:
+                        tmp = BlockedPost(user=request.user, site=site, post_id=str(postid), post_type='1',text_or_url="blocked due to name/account of "+i)
+                        tmp.save()
+    print("in name filter")
+    print(block_list)
+    return JsonResponse({"status":True,"block_list":block_list})
+
+
 
 @csrf_exempt
 def t_to_a(request):
@@ -474,10 +522,17 @@ def t_to_a(request):
     i = 0
     userquery_data = UserTag.objects.filter(user=request.user, site = site)
     for i in userquery_data:
-        if (time.time() - i.created_time.strftime('%s') < i.valid_time):
-            userquery.append(i.tagname.lower())
+        if i.valid_time is not None:
+            if(time.time() - float(i.created_time.strftime('%s')) < i.valid_time):
+                if str(i.tag_type)=='0':
+                    userquery.append(i.tagname.lower())
+            else:
+                i.delete()
+                print("udda in t_to_A")
         else:
-            i.delete()
+            if str(i.tag_type)=='0':
+                userquery.append(i.tagname.lower())
+
     for i in range(0,len(userquery)):
         if Tag.objects.filter(tagname=userquery[i], site = site).count() == 0:
             tmp = Tag(tagname=userquery[i], site = site, no_of_post=0)
@@ -488,6 +543,7 @@ def t_to_a(request):
     for i in request.POST:
         soup = BeautifulSoup(request.POST.get(i), "html.parser")
         posttext = soup.findAll('div', attrs={'class': 'userContent'})
+
         for j in posttext:
             #             # print "this is one item : ",  j.text
             text_of_post = j.text
@@ -499,8 +555,9 @@ def t_to_a(request):
                     userquery2.append(k)
 
             for t in userquery2:
-                tmp = UserPost(user=request.user, site = site,postid=post['id'],post_category='1',tagname=t)
-                tmp.save()
+                if (UserPost.objects.filter(user=request.user, site=site, postid=post['id'], post_category='1',tagname=t).count() == 0):
+                    tmp = UserPost(user=request.user, site = site,postid=post['id'],post_category='1',tagname=t)
+                    tmp.save()
                 all_threads.append(threading.Thread(target=text_filter, args=(text_of_post, index, count, userquery2, block_list, post['id'], request, site)))
                 all_threads[index].start()
                 index = index + 1
@@ -508,12 +565,14 @@ def t_to_a(request):
                 all_threads[index].start()
                 index = index + 1
             if (textmodvalue):
-                print("")
+                if (UserPost.objects.filter(user=request.user, site=site, postid=post['id'], post_category='1').count() == 0):
+                    tmp = UserPost(user=request.user, site = site,postid=post['id'],post_category='1',tagname="dummy")
+                    tmp.save()
                 all_threads.append(threading.Thread(target=text_moderation, args=(text_of_post, index, count, userquery2, block_list, post['id'], request,site)))
                 all_threads[index].start()
                 index = index + 1
     start = time.time()
-    while (3*len(count) != index and time.time() - start < 100):
+    while (len(count) != index and time.time() - start < 40):
         pass
     # print("blocklist in t_to_a")
     # print(block_list)
@@ -584,7 +643,6 @@ def facebook_dashboard(request):
             else:
                 tm = time.time() - float(i.created_time.strftime('%s'))
                 tm = i.valid_time - tm
-                print(tm)
                 tm = int(tm)
                 if(tm >= 86400):
                     tts_genericd.append(int(tm)/86400)
@@ -596,6 +654,7 @@ def facebook_dashboard(request):
                 else:
                     tts_generich.append(0)
         for i in account_tags:
+            print(i.valid_time)
             if i.valid_time is None:
                 tts_accountd.append("-")
                 tts_accounth.append("-")
@@ -610,7 +669,7 @@ def facebook_dashboard(request):
                     tts_generich.append(int(tm) / 3600)
                 else:
                     tts_generich.append(0)
-             # print "tags_to_suggest : " , tags_to_suggest
+            # print "tags_to_suggest : " , tags_to_suggest
         # print "generic tags : " , generic_tags
         # # # print "stats : ", stats
         # print "account tags : ", account_tags
@@ -618,16 +677,15 @@ def facebook_dashboard(request):
         #This part of code need review of shubham/piyush
         myset = UserPost.objects.filter(user=request.user,site = '0')
         myset2 = myset.values('postid')
-        mset = set([])
+        count = 0
         for i in myset2:
-            mset.add(i['postid'])
-        count = len(mset)
-        for i in myset:
-            total = total+i.sentiment_score
+            if BlockedPost.objects.filter(user=request.user, post_id=i) is not None:
+                total = total + UserPost.objects.filter(user=request.user,postid=i['postid'], site = '0')[0].sentiment_score
+                count = count + 1
         if count>0:
             happy_value = total*100/count
         else:
-            happy_value = 0
+            happy_value = 50
         sad_value = 100.0-happy_value
         generic_enum = []
         account_enum = []
@@ -635,33 +693,28 @@ def facebook_dashboard(request):
         for i in generic_tags:
             generic_enum.append([i,tts_genericd[tmpcnt],tts_generich[tmpcnt]])
             tmpcnt = tmpcnt + 1
+        tmpcnt = 0
         for i in account_tags:
             account_enum.append([i,tts_accountd[tmpcnt],tts_accounth[tmpcnt]])
             tmpcnt = tmpcnt + 1
-        print(generic_enum)
-        print(account_enum)
         return render(request,'null/facebook_dashboard.html', {'tags_to_suggest' : tags_to_suggest,
-                                                      'stats0' : stats0,
-                                                      'stats1' : stats1,
-                                                      'stats2' : stats2,
-                                                      'stats3' : stats3,
-                                                      'stats4': stats4,
-                                                      'label0': label0,
-                                                      'label1': label1,
-                                                      'label2': label2,
-                                                      'label3': label3,
-                                                      'label4': label4,
-                                                      'generic_tags':generic_tags,
-                                                      'account_tags':account_tags,
-                                                      'happy_value': happy_value,
-                                                      'sad_value':sad_value,
-                                                      # 'tts_genericd': tts_genericd,
-                                                      # 'tts_generich': tts_generich,
-                                                      # 'tts_accountd': tts_accountd,
-                                                      # 'tts_accounth': tts_accounth,
-                                                      'generic_enum': generic_enum,
-                                                      'account_enum': account_enum
-                                                       })
+                                                               'stats0' : stats0,
+                                                               'stats1' : stats1,
+                                                               'stats2' : stats2,
+                                                               'stats3' : stats3,
+                                                               'stats4': stats4,
+                                                               'label0': label0,
+                                                               'label1': label1,
+                                                               'label2': label2,
+                                                               'label3': label3,
+                                                               'label4': label4,
+                                                               'generic_tags':generic_tags,
+                                                               'account_tags':account_tags,
+                                                               'happy_value': happy_value,
+                                                               'sad_value':sad_value,
+                                                               'generic_enum': generic_enum,
+                                                               'account_enum': account_enum
+                                                               })
 
 def twitter_dashboard(request):
     if request.method == "GET":
@@ -703,8 +756,6 @@ def twitter_dashboard(request):
         for i in total:
             tset.add(i['postid'])
         total = len(tset)
-
-        print(total,stats0,stats1,stats2,stats3)
         stats4 = total - (stats0+stats1+stats2+stats3)
         if total > 0 :
             label0 = str(stats0*100/total)
@@ -723,17 +774,16 @@ def twitter_dashboard(request):
         #This part of code need review of shubham/piyush
         myset = UserPost.objects.filter(user=request.user,site = '1')
         myset2 = myset.values('postid')
-        mset = set([])
+        count = 0
         for i in myset2:
-            mset.add(i['postid'])
-        count = len(mset)
-        for i in myset:
-            total = total+i.sentiment_score
+            if BlockedPost.objects.filter(user=request.user, post_id=i) is not None:
+                print(i)
+                total = total + UserPost.objects.filter(user=request.user, postid=i['postid'], site='1')[0].sentiment_score
+                count = count + 1
         if count>0:
             happy_value = total*100/count
         else:
-            happy_value = 0
-        print(happy_value)
+            happy_value = 50
         sad_value = 100.0-happy_value
         return render(request,'null/twitter_dashboard.html', {'tags_to_suggest' : tags_to_suggest,
                                                       'stats0' : stats0,
@@ -766,9 +816,10 @@ def addtag(request):
     tagname = request.GET.get('tagname')
     tagtype = request.GET.get('tagtype')
     valid_time = request.GET.get('valid_time')
-    print(valid_time)
+    print(valid_time,type(valid_time))
+    if str(valid_time) == '0':
+        valid_time = None
     site = request.GET.get('site')
-    print(tagtype)
     if(UserTag.objects.filter(user=request.user, site=int(site), tagname=tagname,tag_type=tagtype).count()==0):
         tmp = UserTag(user=request.user, site=int(site), tagname=tagname,tag_type=tagtype,valid_time=valid_time)
         tmp.save()
@@ -788,7 +839,6 @@ def removetag(request):
     else:
         return JsonResponse({"status": 0})
 
-#need review
 def fetchtag(request):
     type = request.GET.get('type')
     site = request.GET.get('site')

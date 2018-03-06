@@ -21,6 +21,7 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^image_to_annotation', views.i_to_a ,name='i_to_a'),
     url(r'^text_to_annotation', views.t_to_a ,name='t_to_a'),
+    url(r'^name_filter', views.name_filter ,name='name_filter'),
     url(r'^register$',views.register, name='register'),
     url(r'^login$',views.login_view, name='login_view'),
     url(r'^logout$',views.logout_view, name='logout_view'),

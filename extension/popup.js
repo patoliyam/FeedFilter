@@ -31,14 +31,14 @@ document.addEventListener('DOMContentLoaded',function(){
 	    console.log(site);
 	    $.ajax({
                 type: "POST",
-                url: "https://43ef14f2.ngrok.io/checklogin",
+                url: "https://e2a74d86.ngrok.io/checklogin",
                 success: function(response){
                     if(response.status){
                         $('#login_register').hide();
                         $('#extension').show();
                         $.ajax({
                             type: "GET",
-                            url: "https://43ef14f2.ngrok.io/fetchtag",
+                            url: "https://e2a74d86.ngrok.io/fetchtag",
                             data: {
                                 site: site
                             },
@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded',function(){
 
 		        $.ajax({
 		            type: "GET",
-		            url: "https://43ef14f2.ngrok.io/addtag",
+		            url: "https://e2a74d86.ngrok.io/addtag",
 		            data:{
 		                tagname:tagname,
 		                tagtype:radiobtnvalue,
@@ -235,7 +235,7 @@ function register_fun()
 
     $.ajax({
         type: "POST",
-        url: "https://43ef14f2.ngrok.io/register",
+        url: "https://e2a74d86.ngrok.io/register",
         data:{
             username: username,
             password: password
@@ -271,7 +271,7 @@ function login_fun()
 
     $.ajax({
         type: "POST",
-        url: "https://43ef14f2.ngrok.io/login",
+        url: "https://e2a74d86.ngrok.io/login",
         data:{
             username: username,
             password: password
@@ -296,7 +296,7 @@ function logout_fun()
 {
     $.ajax({
         type: "POST",
-        url: "https://43ef14f2.ngrok.io/logout",
+        url: "https://e2a74d86.ngrok.io/logout",
         success: function(data){
             $('#extension').hide();
             $('#login').show();
