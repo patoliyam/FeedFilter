@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8" />
+    <link rel="icon" type="image/png" href="/static/img/favicon.ico">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
 
 	<title>Twitter Dashboard|FeedFilter</title>
@@ -204,13 +205,57 @@
               series: [{{ happy_value }}, {{ sad_value }}]
             });
             }
-        }
+        };
+
+
+        function Confirm(title, msg, $true, $false, $link) { /*change*/
+                var $content =  "<div class='dialog-ovelay'>" +
+                                "<div class='dialog'><header>" +
+                                 " <h3> " + title + " </h3> " +
+                                 "<i class='fa fa-close'></i>" +
+                             "</header>" +
+                             "<div class='dialog-msg'>" +
+                                 " <p> " + msg + " </p> " +
+                             "</div>" +
+                             "<footer>" +
+                                 "<div class='controls'>" +
+                                     " <button class='button button-danger doAction'>" + $true + "</button> " +
+                                     " <button class='button button-default cancelAction'>" + $false + "</button> " +
+                                 "</div>" +
+                             "</footer>" +
+                          "</div>" +
+                        "</div>";
+                 $('body').prepend($content);
+              $('.doAction').click(function () {
+                window.open($link,"_self"); /*new*/
+                $(this).parents('.dialog-ovelay').fadeOut(500, function () {
+                  $(this).remove();
+                });
+              });
+        $('.cancelAction, .fa-close').click(function () {
+                $(this).parents('.dialog-ovelay').fadeOut(500, function () {
+                  $(this).remove();
+                });
+              });
+
+           }
+
+        $(document).ready(function () {
+            $('#fb_bc').click(function () {
+            Confirm('See Blocked Content of Facebook', 'You blocked this for some reason...Are you sure you want to see it?', 'Yes', 'No', "/fb_blocked_content");
+                /*change*/
+            });
+            $('#ttr_bc').click(function () {
+                    Confirm('See Blocked Content of Twitter', 'You blocked this for some reason...Are you sure you want to see it?', 'Yes', 'No', "/ttr_blocked_content");
+
+            });
+        });
     </script>
 
 <body>
 
 <div class="wrapper">
-    <div class="sidebar" data-color="purple" data-image="/img/sidebar-5.jpg">
+    <div class="sidebar" data-color="purple" data-image="/static/img/sidebar-5.jpg">
 
     <!--
 
@@ -226,32 +271,32 @@
                 </a>
             </div>
             <ul class="nav">
-                <li>
-                    <a href="/fb_dashboard" >
+                <li >
+                    <a href="/fb_dashboard">
                         <i class="pe-7s-graph"></i>
                         <p>Facebook Dashboard</p>
                     </a>
                 </li>
                 <li class="active">
-                    <a href="/ttr_dashboard" >
+                    <a href="/ttr_dashboard">
                         <i class="pe-7s-graph"></i>
                         <p>Twitter Dashboard</p>
                     </a>
                 </li>
-                <li>
-                    <a href="/fb_blocked_content">
+                <li >
+                    <a id ="fb_bc">
                         <i class="pe-7s-note2"></i>
                         <p>Facebook Blocked Content</p>
                     </a>
                 </li>
                 <li>
-                    <a href="/ttr_blocked_content">
+                    <a id ="ttr_bc">
                         <i class="pe-7s-note2"></i>
                         <p>Twitter Blocked Content</p>
                     </a>
                 </li>
             </ul>
-        </div>
+    	</div>
     </div>
 
     <div class="main-panel">

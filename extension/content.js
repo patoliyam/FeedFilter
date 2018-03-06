@@ -24,7 +24,7 @@ $(document).ready(function(){
         setTimeout(function(){
             sendpostandhide(site);
             text(site);  
-            // name(site);
+            name(site);
         },4000);        
     }
 });
@@ -51,12 +51,29 @@ $(document).ready(function(){
 );*/
 
 function sendpostandhide(site){
-    var ele = document.getElementsByClassName("_5jmm");
     var dataToSend = {};
-    for(i = 0; i < ele.length; i++)
+    // var idlist = [];
+    var idlist = {};
+    if (site == 0)
     {
-        dataToSend[i] = (ele[i].outerHTML.toString());
+        var ele = document.getElementsByClassName("_5jmm");
+        for(i = 0; i < ele.length; i++)
+        {
+            dataToSend[i] = (ele[i].outerHTML.toString());
+        }
     }
+    else if(site == 1)
+    {
+        var ele = document.getElementsByClassName("AdaptiveMedia-photoContainer js-adaptive-photo ");
+        var ele2 = document.getElementsByClassName("js-stream-item stream-item stream-item");
+        for(i = 0; i < Math.min(ele.length,ele2.length); i++)
+        {
+            // idlist.push(ele2[i].id);
+            idlist[i] = (ele2[i].id);
+            dataToSend[i] = (ele[i].outerHTML.toString());
+        }
+    }
+
     // userquery = {};
     console.log('data we are sending is : ');
     console.log(dataToSend);
@@ -66,11 +83,12 @@ function sendpostandhide(site){
             var imagemodvalue = item['imagemodvalue'][0];
             $.ajax({
                 type: "POST",
-                url : "https://e2a74d86.ngrok.io/image_to_annotation",
+                url : "https://66e9c195.ngrok.io/image_to_annotation",
                 data: {
                     fbposts: dataToSend,
                     // userquery: userquery,
                     textmodvalue: textmodvalue,
+                    idlist: idlist,
                     imagemodvalue: imagemodvalue,
                     site: site
                 },
@@ -81,7 +99,15 @@ function sendpostandhide(site){
                     console.log("end of ajax i_to_a");
                     for (var a in blocklist)
                     {
-                        $('#'+blocklist[a]).hide();
+                        if(site==0)
+                        {
+                            $('#'+blocklist[a]).hide();
+                        }
+                        else if(site == 1)
+                        {
+                            $('#'+blocklist[a]).remove();
+                        }
+
                     }
                 },
                 error: function (error) {
@@ -117,11 +143,22 @@ function sendpostandhide(site){
 
 function text(site)
 {
-    var ele = document.getElementsByClassName("_5jmm");
     var dataToSend = {};
-    for(i = 0; i < ele.length; i++)
+    if (site == 0)
+    {    
+        var ele = document.getElementsByClassName("_5jmm");
+        for(i = 0; i < ele.length; i++)
+        {
+            dataToSend[i] = (ele[i].outerHTML.toString());
+        }
+    }
+    else if(site == 1)
     {
-        dataToSend[i] = (ele[i].outerHTML.toString());
+        var ele = document.getElementsByClassName("content");
+        for(i = 0; i < ele.length; i++)
+        {
+            dataToSend[i] = (ele[i].outerHTML.toString());
+        }
     }
     // userquery = {};
     console.log('data we are sending is : ');
@@ -132,7 +169,7 @@ function text(site)
             var imagemodvalue = item['imagemodvalue'][0];
             $.ajax({
                 type: "POST",
-                url : "https://e2a74d86.ngrok.io/text_to_annotation",
+                url : "https://66e9c195.ngrok.io/text_to_annotation",
                 data: {
                     fbposts: dataToSend,
                     // userquery: userquery,
@@ -183,18 +220,29 @@ function text(site)
 
 
 function name(site){
-    var ele = document.getElementsByClassName("_5jmm");
     var dataToSend = {};
-    for(i = 0; i < ele.length; i++)
+    if (site == 0)
     {
-        dataToSend[i] = (ele[i].outerHTML.toString());
+        var ele = document.getElementsByClassName("_5jmm");
+        for(i = 0; i < ele.length; i++)
+        {    
+            dataToSend[i] = (ele[i].outerHTML.toString());
+        }
+    }
+    else if(site == 1)
+    {
+        var ele = document.getElementsByClassName("content");
+        for(i = 0; i < ele.length; i++)
+        {
+            dataToSend[i] = (ele[i].outerHTML.toString());
+        }
     }
     // userquery = {};
     console.log('data we are sending is : ');
     console.log(dataToSend);    
     $.ajax({
         type: "POST",
-        url : "https://e2a74d86.ngrok.io/name_filter",
+        url : "https://66e9c195.ngrok.io/name_filter",
         data: {
             fbposts: dataToSend,
             // userquery: userquery,
