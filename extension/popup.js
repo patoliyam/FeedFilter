@@ -31,14 +31,14 @@ document.addEventListener('DOMContentLoaded',function(){
 	    console.log(site);
 	    $.ajax({
                 type: "POST",
-                url: "https://e2a74d86.ngrok.io/checklogin",
+                url: "https://4a76688e.ngrok.io/checklogin",
                 success: function(response){
                     if(response.status){
                         $('#login_register').hide();
                         $('#extension').show();
                         $.ajax({
                             type: "GET",
-                            url: "https://e2a74d86.ngrok.io/fetchtag",
+                            url: "https://4a76688e.ngrok.io/fetchtag",
                             data: {
                                 site: site
                             },
@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded',function(){
 
 		        $.ajax({
 		            type: "GET",
-		            url: "https://e2a74d86.ngrok.io/addtag",
+		            url: "https://4a76688e.ngrok.io/addtag",
 		            data:{
 		                tagname:tagname,
 		                tagtype:radiobtnvalue,
@@ -235,7 +235,7 @@ function register_fun()
 
     $.ajax({
         type: "POST",
-        url: "https://e2a74d86.ngrok.io/register",
+        url: "https://4a76688e.ngrok.io/register",
         data:{
             username: username,
             password: password
@@ -271,7 +271,7 @@ function login_fun()
 
     $.ajax({
         type: "POST",
-        url: "https://e2a74d86.ngrok.io/login",
+        url: "https://4a76688e.ngrok.io/login",
         data:{
             username: username,
             password: password
@@ -296,7 +296,7 @@ function logout_fun()
 {
     $.ajax({
         type: "POST",
-        url: "https://e2a74d86.ngrok.io/logout",
+        url: "https://4a76688e.ngrok.io/logout",
         success: function(data){
             $('#extension').hide();
             $('#login').show();
@@ -321,7 +321,7 @@ function dashboard_fun()
             chrome.storage.sync.get('password', function(item) {
                 var password = item['password'];
                 console.log(username,password);
-                window.open("localhost:8000/facebook_dashboard?username="+username+"&password="+password,'_blank');
+                window.open("localhost:8000/fb_dashboard?username="+username+"&password="+password,'_blank');
             });
         });
     });

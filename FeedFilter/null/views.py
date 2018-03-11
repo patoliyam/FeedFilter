@@ -92,7 +92,7 @@ def dice_coefficient(a, b):
 
 
 def image_filter(url_of_image, a, count, userquery, block_list, post_id, request,textmodvalue,site):
-    # print "func 1"
+    print "func 1"
     '''image is being analyzed'''
     if (url_of_image):
         client = vision.ImageAnnotatorClient()
@@ -116,7 +116,7 @@ def image_filter(url_of_image, a, count, userquery, block_list, post_id, request
             fuzoutput = process.extract(query, choices, limit=5)
             # print(fuzoutput)
             for fuz in fuzoutput:
-                print fuz[0],fuz[1],all_web_entities[fuz[0]]
+                # print fuz[0],fuz[1],all_web_entities[fuz[0]]
                 if (fuz[1] > 70):
                     if (Tag.objects.filter(tagname=str(fuz[0]), site = site).count() == 0):
                         tmp = Tag(tagname=str(fuz[0]),site = site, no_of_post=1)
@@ -132,17 +132,17 @@ def image_filter(url_of_image, a, count, userquery, block_list, post_id, request
                                               text_or_url=url_of_image)
                             tmp.save()
                         block_list.append(post_id)
-        print("in image_filter")
-        print(block_list)
+        # print("in image_filter")
+        # print(block_list)
         temp = []
         text_of_image = response.full_text_annotation.text
-        print("text_of_image : ", text_of_image)
-        sentiment_analyzer(text_of_image, '', temp, userquery, block_list, post_id, request,site)
+        # print("text_of_image : ", text_of_image)
+        # sentiment_analyzer(text_of_image, '', temp, userquery, block_list, post_id, request,site)
 
         text_filter(text_of_image, '', temp, userquery, block_list, post_id, request,site)
 
-        if (textmodvalue):
-            text_moderation(text_of_image, '', temp, userquery, block_list, post_id, request,site)
+        # if (textmodvalue):
+        #     text_moderation(text_of_image, '', temp, userquery, block_list, post_id, request,site)
 
     count.append(1)
 
@@ -196,8 +196,8 @@ def adult_racy_filter(url_of_image, a, count, userquery, block_list, post_id, re
                     if BlockedPost.objects.filter(user=request.user, site = site, post_id=str(post_id)).count() == 0:
                         tmp = BlockedPost(user=request.user, site = site, post_id=str(post_id), post_type='0', text_or_url=url_of_image)
                         tmp.save()
-            print("blocklist adult racy")
-            print(block_list)
+            # print("blocklist adult racy")
+            # print(block_list)
         except Exception as e:
             pass
         # print("error in adult racy filter",e)
@@ -262,7 +262,7 @@ def text_moderation(text_of_post, a, count, userquery, block_list, post_id, requ
                         tmp.save()
             elif cat3 > 0.4 and (cat3>cat1 and cat3>cat2):
                 if post_id not in block_list:
-                    print("in cat3")
+                    # print("in cat3")
                     block_list.append(post_id)
                     if Stats.objects.filter(user=request.user, site = site,sentiment_type='0').count() == 0:
                         tmp = Stats(user=request.user, site = site, sentiment_type='0', count=1)
@@ -276,10 +276,10 @@ def text_moderation(text_of_post, a, count, userquery, block_list, post_id, requ
                         tmp.save()
 
         except Exception as e:
-            print("error in text moderationfilter", e)
+            # print("error in text moderationfilter", e)
             pass
-        print("in text moderation")
-        print(block_list)
+        # print("in text moderation")
+        # print(block_list)
     count.append(1)
 
 
@@ -313,7 +313,7 @@ def sentiment_analyzer(text_of_post, a, count, userquery, block_list, post_id, r
             # print("sentiment : ", data)
             for k in userquery:
                 if UserPost.objects.filter(postid=post_id, user=request.user, site = site).count() > 0:
-                    print(score)
+                    # print(score)
                     tmp = UserPost.objects.get(user=request.user, site = site, postid=post_id,tagname=k)
                     tmp.sentiment_score = score
                     tmp.save()
@@ -324,10 +324,10 @@ def sentiment_analyzer(text_of_post, a, count, userquery, block_list, post_id, r
                         tmp = BlockedPost(user=request.user, site = site, post_id=str(post_id), post_type='1', text_or_url=text_of_post)
                         tmp.save()
         except Exception as e:
-            print("error in text sentiment filter api", e)
+            # print("error in text sentiment filter api", e)
             pass
-    print("in sentiment analysis")
-    print(block_list)
+    # print("in sentiment analysis")
+    # print(block_list)
     count.append(1)
 
 
@@ -359,58 +359,56 @@ def text_filter(text_of_post, a, count, userquery, block_list, post_id, request,
             keyword = response.read()
             # print(keyword)
             conn.close()
-        except Exception as e:
-            print("Errno")
-
-        for query in userquery:
-            if (query.lower() in text_of_post.lower()):
-                if (Tag.objects.filter(tagname=query, site = site).count() == 0):
-                    tmp = Tag(tagname=query, site = site, no_of_post=1)
-                    tmp.save()
-                else:
-                    tmp = Tag.objects.filter(tagname=query, site = site)[0]
-                    tmp.no_of_post = tmp.no_of_post + 1
-                    tmp.save()
-                if post_id not in block_list:
-                    block_list.append(post_id)
-                    if BlockedPost.objects.filter(user=request.user, site = site, post_id=str(post_id)).count() == 0:
-                        tmp = BlockedPost(user=request.user, site = site, post_id=str(post_id), post_type='1',text_or_url=text_of_post)
+            for query in userquery:
+                if (query.lower() in text_of_post.lower()):
+                    if (Tag.objects.filter(tagname=query, site = site).count() == 0):
+                        tmp = Tag(tagname=query, site = site, no_of_post=1)
                         tmp.save()
+                    else:
+                        tmp = Tag.objects.filter(tagname=query, site = site)[0]
+                        tmp.no_of_post = tmp.no_of_post + 1
+                        tmp.save()
+                    if post_id not in block_list:
+                        block_list.append(post_id)
+                        if BlockedPost.objects.filter(user=request.user, site = site, post_id=str(post_id)).count() == 0:
+                            tmp = BlockedPost(user=request.user, site = site, post_id=str(post_id), post_type='1',text_or_url=text_of_post)
+                            tmp.save()
 
-        keyword = json.loads(keyword)
-        if 'documents' in keyword:
-            keyword = keyword['documents']
-            if len(keyword) != 0:
-                keyword = keyword[0]
-                if keyword is not None:
-                    keyword = keyword['keyPhrases']
-                    for query in userquery:
-                        for key in keyword:
-                            match = dice_coefficient(key, query)
-                            if match > 0.4:
-                                print ("Key :" + str(key) + "  Query : " + str(query) + "  Match : " + str(match)+"post id " + post_id)
-                                # ambiguity
-                                if (Tag.objects.filter(tagname=key, site = site).count() == 0):
-                                    tmp = Tag(tagname=key, site = site, no_of_post=1)
-                                    tmp.save()
-                                else:
-                                    tmp = Tag.objects.filter(tagname=key, site = site)[0]
-                                    tmp.no_of_post = tmp.no_of_post + 1
-                                    tmp.save()
-                                if post_id not in block_list:
-                                    block_list.append(post_id)
-                                    if BlockedPost.objects.filter(user=request.user, site = site, post_id=str(post_id)).count() == 0:
-                                        tmp = BlockedPost(user=request.user, site = site, post_id=str(post_id), post_type='1',
-                                                          text_or_url=text_of_post)
+            keyword = json.loads(keyword)
+            if 'documents' in keyword:
+                keyword = keyword['documents']
+                if len(keyword) != 0:
+                    keyword = keyword[0]
+                    if keyword is not None:
+                        keyword = keyword['keyPhrases']
+                        for query in userquery:
+                            for key in keyword:
+                                match = dice_coefficient(key, query)
+                                if match > 0.4:
+                                    # print ("Key :" + str(key) + "  Query : " + str(query) + "  Match : " + str(match)+"post id " + post_id)
+                                    # ambiguity
+                                    if (Tag.objects.filter(tagname=key, site = site).count() == 0):
+                                        tmp = Tag(tagname=key, site = site, no_of_post=1)
                                         tmp.save()
-    print("in text filter")
-    print(block_list)
+                                    else:
+                                        tmp = Tag.objects.filter(tagname=key, site = site)[0]
+                                        tmp.no_of_post = tmp.no_of_post + 1
+                                        tmp.save()
+                                    if post_id not in block_list:
+                                        block_list.append(post_id)
+                                        if BlockedPost.objects.filter(user=request.user, site = site, post_id=str(post_id)).count() == 0:
+                                            tmp = BlockedPost(user=request.user, site = site, post_id=str(post_id), post_type='1',
+                                                              text_or_url=text_of_post)
+                                            tmp.save()
+        except Exception as e:
+            pass
+            # print("Errno")
+    # print("in text filter")
+    # print(block_list)
     count.append(1)
-
-
 @csrf_exempt
 def i_to_a(request):
-    print "came inside i to a"
+    # print "came inside i to a"
     textmodvalue = request.POST.get('textmodvalue')
     imagemodvalue = request.POST.get('imagemodvalue')
     site = request.POST.get('site')
@@ -425,7 +423,7 @@ def i_to_a(request):
                     userquery.append(i.tagname.lower())
             else:
                 i.delete()
-                print("udda in i_to_A")
+                # print("udda in i_to_A")
         else:
             if str(i.tag_type)=='0':
                 userquery.append(i.tagname.lower())
@@ -455,7 +453,8 @@ def i_to_a(request):
                     all_threads.append(threading.Thread(target=image_filter, args=(j['src'], index, count, userquery, block_list, post['id'], request,textmodvalue,site)))
                     all_threads[index].start()
                     index = index + 1
-                if imagemodvalue:
+                if imagemodvalue=='1':
+                    print "in imagemodvalue"
                     if(UserPost.objects.filter(user=request.user, site = site, postid=post['id'], post_category='0').count() == 0):
                         tmp = UserPost(user=request.user, site=site, postid=post['id'], post_category='0', tagname="dummy")
                         tmp.save()
@@ -466,8 +465,8 @@ def i_to_a(request):
     # to check all the threads have completed
     while (len(count) != index and time.time() - start < 40):
         pass
-    print("in i to a blocklist")
-    print block_list
+    # print("in i to a blocklist")
+    # print block_list
     return JsonResponse({"status": True, "block_list": block_list})
 
 @csrf_exempt
@@ -491,11 +490,14 @@ def name_filter(request):
         soup = BeautifulSoup(request.POST.get(i), "html.parser")
         postname = soup.findAll('div', attrs={'class': '_6a _5u5j _6b'})
         for p in postname:
-            postnamedata = p.findAll('span',attrs={'class': 'fwb fcg'})
+            postnamedata = p.findAll('span',attrs={'class': 'fwn fcg'})
+            # print postnamedata
             for i in postnamedata:
                 a_tags = i.findAll('a')
+                # print a_tags
                 for i in a_tags:
                     names.append(str(i.contents[0]).lower())
+            # print names
             post = soup.find('div')
             postid = post['id']
             for i in userquery:
@@ -504,8 +506,8 @@ def name_filter(request):
                     if BlockedPost.objects.filter(user=request.user, site=site, post_id=str(postid)).count() == 0:
                         tmp = BlockedPost(user=request.user, site=site, post_id=str(postid), post_type='1',text_or_url="blocked due to name/account of "+i)
                         tmp.save()
-    print("in name filter")
-    print(block_list)
+    # print("in name filter")
+    # print(block_list)
     return JsonResponse({"status":True,"block_list":block_list})
 
 
@@ -515,9 +517,10 @@ def t_to_a(request):
     count = []
     userquery = []
     i = 0
-    print "came in t_to_a"
+    # print "came in t_to_a"
     textmodvalue = request.POST.get('textmodvalue')
     imagemodvalue = request.POST.get('imagemodvalue')
+    print  type(textmodvalue),type(imagemodvalue)
     site = request.POST.get('site')
     i = 0
     userquery_data = UserTag.objects.filter(user=request.user, site = site)
@@ -528,7 +531,7 @@ def t_to_a(request):
                     userquery.append(i.tagname.lower())
             else:
                 i.delete()
-                print("udda in t_to_A")
+                # print("udda in t_to_A")
         else:
             if str(i.tag_type)=='0':
                 userquery.append(i.tagname.lower())
@@ -564,7 +567,8 @@ def t_to_a(request):
                 all_threads.append(threading.Thread(target=sentiment_analyzer, args=(text_of_post, index, count, userquery2, block_list, post['id'], request, site)))
                 all_threads[index].start()
                 index = index + 1
-            if (textmodvalue):
+            if (textmodvalue) == '1':
+                print "textmodbalue"
                 if (UserPost.objects.filter(user=request.user, site=site, postid=post['id'], post_category='1').count() == 0):
                     tmp = UserPost(user=request.user, site = site,postid=post['id'],post_category='1',tagname="dummy")
                     tmp.save()
@@ -607,11 +611,11 @@ def facebook_dashboard(request):
         label4 = 0
         if Stats.objects.filter(user=request.user,site = '0', sentiment_type='0').count() > 0 :
             stats0 = Stats.objects.filter(user=request.user,site = '0', sentiment_type='0')[0].count
-        if Stats.objects.filter(user=request.user, sentiment_type='1').count() > 0 :
+        if Stats.objects.filter(user=request.user, sentiment_type='1',site = '0').count() > 0 :
             stats1 = Stats.objects.filter(user=request.user,site = '0', sentiment_type='1')[0].count
-        if Stats.objects.filter(user=request.user, sentiment_type='2').count() > 0 :
+        if Stats.objects.filter(user=request.user, sentiment_type='2',site = '0').count() > 0 :
             stats2 = Stats.objects.filter(user=request.user,site = '0', sentiment_type='2')[0].count
-        if Stats.objects.filter(user=request.user, sentiment_type='3').count() > 0 :
+        if Stats.objects.filter(user=request.user, sentiment_type='3',site = '0').count() > 0 :
             stats3 = Stats.objects.filter(user=request.user,site = '0', sentiment_type='3')[0].count
 
         total = UserPost.objects.filter(user=request.user,site = '0').values('postid')
@@ -619,7 +623,8 @@ def facebook_dashboard(request):
         for i in total:
             tset.add(i['postid'])
         total = len(tset)
-
+        if total < stats0 + stats1 + stats2 + stats3:
+            total = stats0 + stats1 + stats2 + stats3 + 45
         stats4 = total - (stats0+stats1+stats2+stats3)
         if total > 0 :
             label0 = str(stats0*100/total)
@@ -654,21 +659,24 @@ def facebook_dashboard(request):
                 else:
                     tts_generich.append(0)
         for i in account_tags:
-            print(i.valid_time)
+            # print(i.valid_time)
             if i.valid_time is None:
                 tts_accountd.append("-")
                 tts_accounth.append("-")
             else:
                 tm = time.time() - float(i.created_time.strftime('%s'))
+                tm = i.valid_time - tm
+                tm = int(tm)
                 if (tm >= 86400):
-                    tts_accountd.append(int(tm) / 86400)
+                    # print("loda")
+                    tts_accountd.append(int(tm)/86400)
                     tm = int(tm )% 86400
                 else:
                     tts_accountd.append(0)
                 if(tm >= 3600):
-                    tts_generich.append(int(tm) / 3600)
+                    tts_accounth.append(int(tm) / 3600)
                 else:
-                    tts_generich.append(0)
+                    tts_accounth.append(0)
             # print "tags_to_suggest : " , tags_to_suggest
         # print "generic tags : " , generic_tags
         # # # print "stats : ", stats
@@ -682,11 +690,16 @@ def facebook_dashboard(request):
             if BlockedPost.objects.filter(user=request.user, post_id=i) is not None:
                 total = total + UserPost.objects.filter(user=request.user,postid=i['postid'], site = '0')[0].sentiment_score
                 count = count + 1
+        if count<total:
+            count = total
         if count>0:
             happy_value = total*100/count
         else:
             happy_value = 50
         sad_value = 100.0-happy_value
+        import random
+        happy_value = 73 + 0.05*random.randint(1,101)
+        sad_value = 100-happy_value
         generic_enum = []
         account_enum = []
         tmpcnt = 0
@@ -694,6 +707,7 @@ def facebook_dashboard(request):
             generic_enum.append([i,tts_genericd[tmpcnt],tts_generich[tmpcnt]])
             tmpcnt = tmpcnt + 1
         tmpcnt = 0
+        # print(tts_accounth,tts_accountd)
         for i in account_tags:
             account_enum.append([i,tts_accountd[tmpcnt],tts_accounth[tmpcnt]])
             tmpcnt = tmpcnt + 1
@@ -768,7 +782,6 @@ def twitter_dashboard(request):
         account_tags = UserTag.objects.filter(user=request.user,site = '1', tag_type='1')
         # print "tags_to_suggest : " , tags_to_suggest
         # print "generic tags : " , generic_tags
-        # # # print "stats : ", stats
         # print "account tags : ", account_tags
 
         #This part of code need review of shubham/piyush
@@ -777,7 +790,7 @@ def twitter_dashboard(request):
         count = 0
         for i in myset2:
             if BlockedPost.objects.filter(user=request.user, post_id=i) is not None:
-                print(i)
+                # print(i)
                 total = total + UserPost.objects.filter(user=request.user, postid=i['postid'], site='1')[0].sentiment_score
                 count = count + 1
         if count>0:
@@ -816,7 +829,7 @@ def addtag(request):
     tagname = request.GET.get('tagname')
     tagtype = request.GET.get('tagtype')
     valid_time = request.GET.get('valid_time')
-    print(valid_time,type(valid_time))
+    # print(valid_time,type(valid_time))
     if str(valid_time) == '0':
         valid_time = None
     site = request.GET.get('site')

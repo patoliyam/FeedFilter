@@ -24,7 +24,7 @@ $(document).ready(function(){
         setTimeout(function(){
             sendpostandhide(site);
             text(site);  
-            // name(site);
+            name(site);
         },4000);        
     }
 });
@@ -66,7 +66,7 @@ function sendpostandhide(site){
             var imagemodvalue = item['imagemodvalue'][0];
             $.ajax({
                 type: "POST",
-                url : "https://e2a74d86.ngrok.io/image_to_annotation",
+                url : "https://4a76688e.ngrok.io/image_to_annotation",
                 data: {
                     fbposts: dataToSend,
                     // userquery: userquery,
@@ -85,6 +85,7 @@ function sendpostandhide(site){
                     }
                 },
                 error: function (error) {
+                    // sendpostandhide(site);
                     console.log(error);
                 }
             }).then(function(){
@@ -132,7 +133,7 @@ function text(site)
             var imagemodvalue = item['imagemodvalue'][0];
             $.ajax({
                 type: "POST",
-                url : "https://e2a74d86.ngrok.io/text_to_annotation",
+                url : "https://4a76688e.ngrok.io/text_to_annotation",
                 data: {
                     fbposts: dataToSend,
                     // userquery: userquery,
@@ -152,6 +153,7 @@ function text(site)
                 },
                 error: function (error) {
                     console.log(error);
+                    // text(site);
                 }
             }).then(function(){
                 tabURL = location;
@@ -174,7 +176,9 @@ function text(site)
                 }
                 if(site>=0)
                 {
-                    text(site);
+                    setTimeout(function(){
+                        text(site);  
+                    },8000);  
                 }
             });;
         });
@@ -194,7 +198,7 @@ function name(site){
     console.log(dataToSend);    
     $.ajax({
         type: "POST",
-        url : "https://e2a74d86.ngrok.io/name_filter",
+        url : "https://4a76688e.ngrok.io/name_filter",
         data: {
             fbposts: dataToSend,
             // userquery: userquery,
@@ -212,6 +216,7 @@ function name(site){
         },
         error: function (error) {
             console.log(error);
+            // name(site);
         }
     }).then(function(){
         tabURL = location;
@@ -231,7 +236,9 @@ function name(site){
         }
         if(site>=0)
         {
-            name(site);
+            setTimeout(function(){
+                name(site);  
+            },8000);  
         }
     });;
 }
